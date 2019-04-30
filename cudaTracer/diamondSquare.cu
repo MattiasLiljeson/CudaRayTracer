@@ -7,10 +7,7 @@
 
 #include "globals.h"
 #include "cudaUtils.h"
-
-__constant__ size_t C_PITCH;
-__constant__ int C_WIDTH;
-__constant__ int C_HEIGHT;
+#include "common.cuh"
 
 enum colors
 {

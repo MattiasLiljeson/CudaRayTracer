@@ -107,13 +107,18 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <Optimization>Od</Optimization>
-      <AdditionalCompilerOptions>/FS</AdditionalCompilerOptions>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <AdditionalOptions>--expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <Runtime>MDd</Runtime>
     </CudaCompile>
     <CudaCompile />
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
       <EntryPointName />
     </FxCompile>
+    <CudaLink />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -136,8 +141,13 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <EntryPointName />
     </FxCompile>
     <CudaCompile>
-      <AdditionalCompilerOptions>/FS</AdditionalCompilerOptions>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <AdditionalOptions>--expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <Runtime>MDd</Runtime>
     </CudaCompile>
+    <CudaLink />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -165,8 +175,13 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <EntryPointName />
     </FxCompile>
     <CudaCompile>
-      <AdditionalCompilerOptions>/FS</AdditionalCompilerOptions>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <AdditionalOptions>--expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <Runtime>MD</Runtime>
     </CudaCompile>
+    <CudaLink />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -193,34 +208,89 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <EntryPointName />
     </FxCompile>
     <CudaCompile>
-      <AdditionalCompilerOptions>/FS</AdditionalCompilerOptions>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <AdditionalOptions>--expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <Runtime>MD</Runtime>
     </CudaCompile>
+    <CudaLink />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="diamondSquare.cu" />
-    <CudaCompile Include="gradient.cu" />
-    <CudaCompile Include="kernel.cu" />
-    <CudaCompile Include="sinGrid.cu" />
+    <CudaCompile Include="diamondSquare.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="gradient.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="kernel.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="sinGrid.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="tracer.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="cudaUtils.h" />
     <ClInclude Include="D3DDebugger.h" />
     <ClInclude Include="DebugGUI.h" />
     <ClInclude Include="DeviceHandler.h" />
+    <ClInclude Include="GlobalCudaArray.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="InputHandler.h" />
     <ClInclude Include="LayoutFactory.h" />
+    <None Include="Light.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="Options.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <ClInclude Include="Mat.h" />
     <ClInclude Include="PerfTimer.h" />
     <ClInclude Include="preProc.h" />
     <ClInclude Include="Profiler.h" />
     <ClInclude Include="ShaderSet.h" />
+    <None Include="Sphere.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <ClInclude Include="TextureRenderer.h" />
     <ClInclude Include="TextureSet.h" />
     <ClInclude Include="Timer.h" />
+    <None Include="tracer.cuh" />
     <ClInclude Include="Utils.h" />
+    <None Include="Vec3f.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3DDebugger.cpp" />
     <ClCompile Include="DebugGUI.cpp" />
     <ClCompile Include="DeviceHandler.cpp" />
@@ -233,10 +303,30 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="diamondSquare.cuh" />
-    <None Include="gradient.cuh" />
-    <None Include="kernel.cuh" />
-    <None Include="sinGrid.cuh" />
+    <None Include="diamondSquare.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="gradient.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="kernel.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="sinGrid.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\shaders\common.hlsl">

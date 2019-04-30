@@ -81,6 +81,9 @@
     <ClInclude Include="InputHandler.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="GlobalCudaArray.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -94,6 +97,9 @@
     </Filter>
     <Filter Include="Source\Utils">
       <UniqueIdentifier>{3d230d8b-9d45-44ef-8a1c-a83858e964f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cuda kernels\Utils">
+      <UniqueIdentifier>{e6d8bd9f-d2e3-47d5-a8a8-df33cb0af2c0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -120,6 +126,9 @@
     <CudaCompile Include="diamondSquare.cu">
       <Filter>Cuda kernels</Filter>
     </CudaCompile>
+    <CudaCompile Include="tracer.cu">
+      <Filter>Cuda kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kernel.cuh">
@@ -133,6 +142,21 @@
     </None>
     <None Include="diamondSquare.cuh">
       <Filter>Cuda kernels</Filter>
+    </None>
+    <None Include="tracer.cuh">
+      <Filter>Cuda kernels</Filter>
+    </None>
+    <None Include="Vec3f.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Sphere.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Light.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Options.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
     </None>
   </ItemGroup>
 </Project>
