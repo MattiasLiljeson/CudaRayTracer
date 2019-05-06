@@ -6,25 +6,6 @@
 
 enum MaterialType { DIFFUSE_AND_GLOSSY, REFLECTION_AND_REFRACTION, REFLECTION };
 
-struct Vec2f {
-    float x, y;
-};
-
-inline __host__ __device__ Vec2f vec2f(float x, float y) {
-    Vec2f ret;
-    ret.x = x;
-    ret.y = y;
-    return ret;
-}
-inline __host__ __device__ Vec2f vec2f(float x) { return vec2f(x); }
-inline __host__ __device__ Vec2f vec2f() { return vec2f(0.0f); }
-inline __device__ Vec2f times(const Vec2f v, const float &r) {
-    return vec2f(v.x * r, v.y * r);
-}
-inline __device__ Vec2f plus(const Vec2f &v1, const Vec2f &v2) {
-    return vec2f(v1.x + v2.x, v1.y + v2.y);
-}
-
 struct Object {
     // material properties
     MaterialType materialType;

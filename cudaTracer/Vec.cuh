@@ -138,6 +138,7 @@ class Vec {
 };
 
 typedef Vec<float, 3> Vec3f;
+typedef Vec<float, 2> Vec2f;
 
 //__host__ __device__ Vec<float, 3> vec3f(float x, float y, float z);
 //
