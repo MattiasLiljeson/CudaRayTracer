@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cudaUtils.h"
+
 template <typename T, int Size>
 class GlobalCudaArray {
    public:
@@ -10,8 +12,7 @@ class GlobalCudaArray {
     void allocateOnDevice() { gpuErrchk(cudaMalloc((void**)&cudaMem, size)); }
 
     void copyToDevice() {
-        gpuErrchk(
-            cudaMemcpy(cudaMem, &hostMem[0], size, cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(cudaMem, &hostMem[0], size, cudaMemcpyDefault));
         copied = true;
     }
 
@@ -23,11 +24,9 @@ class GlobalCudaArray {
         return cudaMem;
     }
 
-    constexpr int getSize() { return Size; } 
+    constexpr int getSize() { return Size; }
 
-    T& operator[](int idx) {
-        return hostMem[idx];
-    }
+    T& operator[](int idx) { return hostMem[idx]; }
     const T& operator[](int idx) const { return hostMem[idx]; }
 
    private:

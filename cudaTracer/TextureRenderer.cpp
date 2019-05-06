@@ -18,8 +18,11 @@
 // Public functions
 //=========================================================================
 TextureRenderer::TextureRenderer(DeviceHandler* p_deviceHandler, int p_texWidth,
-                                 int p_texHeight) {
+                                 int p_texHeight, InputHandler* p_input,
+                                 Camera* p_camera) {
     m_deviceHandler = p_deviceHandler;
+    input = p_input;
+    camera = p_camera;
     m_texWidth = p_texWidth;
     m_texHeight = p_texHeight;
     m_shaderSet = nullptr;
@@ -47,7 +50,6 @@ TextureRenderer::~TextureRenderer() {
     SAFE_RELEASE(m_rsDefault);
     SAFE_RELEASE(m_rsWireframe);
 }
-
 void TextureRenderer::update(float p_dt) {
     cudaStream_t stream = 0;
     const int nbResources = 1;
@@ -57,8 +59,69 @@ void TextureRenderer::update(float p_dt) {
     cudaGraphicsMapResources(nbResources, ppResources, stream);
     getLastCudaError("cudaGraphicsMapResources(3) failed");
 
+    // handle input
+    float speed = 50.0f;
+    input->update();
+    if (input->getKey(InputHandler::W)) camera->walk(speed * p_dt);
+    if (input->getKey(InputHandler::A)) camera->strafe(-speed * p_dt);
+    if (input->getKey(InputHandler::S)) camera->walk(-speed * p_dt);
+    if (input->getKey(InputHandler::D)) camera->strafe(speed * p_dt);
+    if (input->getKey(InputHandler::SPACE)) camera->ascend(speed * p_dt);
+    if (input->getKey(InputHandler::LCTRL)) camera->ascend(-speed * p_dt);
+    camera->rotateY((float)-input->getMouse(InputHandler::X) * 10 * p_dt);
+    camera->pitch((float)-input->getMouse(InputHandler::Y) * 10 * p_dt);
+    camera->update();
 
+    Mat44f rotY = Mat44f::rotationY(p_dt*100);
+    // update lights
+    for (int i = 0; i < lights.size();++i) {
+        Vec3f tmp = lights[i].position;
+        tmp = rotY.multVec(lights[i].position);
+        lights[i].position = tmp;
+    }
+    lights.copyToDevice();
 
+    // debug stuff
+    {
+        static Vec3f dir[9];
+        static bool added = false;  // only add ATB the first time
+        static char buffer[128];
+        static int mouseY = 0;
+        static int mouseX = 0;
+
+        DebugGUI* dg = DebugGUI::getInstance();
+        if (!added) {
+            dg->addVar("Mouse", DebugGUI::DG_INT, DebugGUI::READ_ONLY, "X",
+                       &mouseX);
+            dg->addVar("Mouse", DebugGUI::DG_INT, DebugGUI::READ_ONLY, "Y",
+                       &mouseY);
+        }
+        mouseX = input->getMouse(InputHandler::X);
+        mouseY = input->getMouse(InputHandler::Y);
+
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                float x = 320 * i, y = 240 * j;
+                float ndc_x =
+                    (2.0f * (x + 0.5f) / (float)options[0].width - 1.0f) *
+                    options[0].imageAspectRatio * options[0].scale;
+                float ndc_y =
+                    (1.0f - 2.0f * (y + 0.5f) / (float)options[0].height) *
+                    options[0].scale;
+                if (!added) {
+                    // TODO: debug
+                    sprintf_s(buffer, "ray %d %d", i, j);
+                    DebugGUI::getInstance()->addVar(
+                        "Rays", DebugGUI::DG_VEC3, DebugGUI::READ_WRITE,
+                        string(buffer), &(dir[i * 3 + j]));
+                }
+                dir[i * 3 + j] = Vec3f(ndc_x, ndc_y, -1.0f).normalized();
+                dir[i * 3 + j] = camera->getCamera().multVec(dir[i * 3 + j]);
+                dir[i * 3 + j] = dir[i * 3 + j].normalized();
+            }
+        }
+        added = true;
+    }
 
     // populate the 2d texture
     {
@@ -66,13 +129,12 @@ void TextureRenderer::update(float p_dt) {
         // cudaLinearMemory as an argument to allow the kernel to
         // write to it
 
-        static Vec3f orig = Vec<float, 3>(0.0f, 0.0f, 0.0f);
-        orig += Vec3f(1.0f * p_dt, 0.0f, 0.0f);
-        
-        main(options.getDevMem(), lights.getDevMem(), lights.getSize(), spheres.getDevMem(),
-             spheres.getSize(),
-             m_textureSet.cudaLinearMemory, options[0].width,
-             options[0].height, m_textureSet.pitch, orig);
+        cudamain(options.getDevMem(), lights.getDevMem(), lights.size(),
+                 spheres.getDevMem(), spheres.size(),
+                 m_textureSet.cudaLinearMemory, options[0].width,
+                 options[0].height, m_textureSet.pitch,
+                 // Vec3f(0.0f,0.0f,0.0f),
+                 camera->getPosition(), camera->getCamera());
         getLastCudaError("cuda_texture_2d failed");
 
         cudaArray* cuArray;
@@ -265,6 +327,10 @@ void TextureRenderer::initInterop() {
     // m_curandStates = nullptr;
     // m_curandStates = cu_initCurand( m_texWidth, m_texHeight );
 
+    size_t stacksize = 0;
+    gpuErrchk(cudaDeviceGetLimit(&stacksize, cudaLimitStackSize));
+    gpuErrchk(cudaDeviceSetLimit(cudaLimitStackSize, 8096));
+
     options[0].width = m_textureSet.width;
     options[0].height = m_textureSet.height;
     options[0].fov = 90;
@@ -275,18 +341,43 @@ void TextureRenderer::initInterop() {
     options[0].imageAspectRatio = options[0].width / (float)options[0].height;
     options.copyToDevice();
 
-    lights[0] = Light(Vec<float, 3>(-20.0f, 70.0f, 20.0f), Vec<float, 3>(0.5f,0.5f,0.5f));
-    lights[1] = Light(Vec<float, 3>(30.0f, 50.0f, -12.0f), Vec<float, 3>(1.0f,1.0f,1.0f));
+    const int numLights = 10;
+    const float radStep = (2 * PI) / numLights;
+
+    for (int i = 0; i < 10; ++i) {
+        Vec3f position(sin(i * radStep) * 5, 0.0f, cos(i * radStep) * 5);
+        Vec3f intensity(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
+                        rand() / (float)RAND_MAX);
+        lights.pushBack(Light(position, intensity));
+    }
     lights.copyToDevice();
 
-    spheres[0] = Sphere::sphere(Vec<float, 3>(-1.0f, 0.0f, -12.0f), 2.0f);
-    spheres[0].materialType = REFLECTION;
-    spheres[0].diffuseColor = Vec<float, 3>(0.6f, 0.7f, 0.8f);
+    const int sphereCntSqrt = 5;
+    for (int i = 0; i < sphereCntSqrt; ++i) {
+        for (int j = 0; j < sphereCntSqrt; ++j) {
+            int idx = i * sphereCntSqrt + j;
+            // std::cerr << idx << std::endl;
+            float scale = 1.0f / sphereCntSqrt;
+            float x = -sphereCntSqrt + i * 2.0f;
+            float z = -sphereCntSqrt + j * 2.0f;
+            Sphere s = Sphere::sphere(Vec3f(x, -4.0f, z), 1.0f);
+            s.object.materialType = DIFFUSE_AND_GLOSSY;
+            s.object.diffuseColor = Vec3f(0.1f, 0.1f, 0.1f);
+            spheres.pushBack(s);
+        }
+    }
 
-    spheres[1] = Sphere::sphere(Vec<float, 3>(0.5f, -0.5f, -8.0f), 1.5f);
-    spheres[1].ior = 1.5f;
-    spheres[1].materialType = REFLECTION;
-    spheres[1].diffuseColor = Vec<float, 3>(0.8f, 0.7f, 0.6f);
+    Sphere mirrorBall = Sphere::sphere(Vec<float, 3>(0.0f, -1.0f, -3.0f), 1.0f);
+    mirrorBall.object.materialType = REFLECTION;
+    mirrorBall.object.diffuseColor = Vec<float, 3>(0.6f, 0.7f, 0.8f);
+    spheres.pushBack(mirrorBall);
+
+    Sphere glassBall = Sphere::sphere(Vec<float, 3>(0.5f, -1.5f, 0.5f), 1.5f);
+    glassBall.object.ior = 1.5f;
+    glassBall.object.materialType = REFLECTION_AND_REFRACTION;
+    glassBall.object.diffuseColor = Vec<float, 3>(0.8f, 0.7f, 0.6f);
+    spheres.pushBack(glassBall);
+
     spheres.copyToDevice();
 }
 

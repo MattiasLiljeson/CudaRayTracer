@@ -1,7 +1,7 @@
 #ifndef LIGHT_CUH
 #define LIGHT_CUH
 
-#include "Vec3f.cuh"
+#include "Vec.cuh"
 
 struct Light {
     __host__ constexpr Light()

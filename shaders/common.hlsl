@@ -1,5 +1,3 @@
-#pragma once
-
 Texture2D g_tex : register (t0);
 
 struct VertexIn

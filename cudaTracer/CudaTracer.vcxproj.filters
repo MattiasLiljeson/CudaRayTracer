@@ -31,6 +31,12 @@
     <ClCompile Include="InputHandler.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DeviceHandler.h">
@@ -81,8 +87,14 @@
     <ClInclude Include="InputHandler.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="GlobalCudaArray.h">
+    <ClInclude Include="Camera.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalCudaArray.h">
+      <Filter>Source\Cuda utils</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalCudaVector.h">
+      <Filter>Source\Cuda utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -100,6 +112,9 @@
     </Filter>
     <Filter Include="Cuda kernels\Utils">
       <UniqueIdentifier>{e6d8bd9f-d2e3-47d5-a8a8-df33cb0af2c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Cuda utils">
+      <UniqueIdentifier>{cc409995-ec9a-4db4-b30e-06e16149d6b4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +144,9 @@
     <CudaCompile Include="tracer.cu">
       <Filter>Cuda kernels</Filter>
     </CudaCompile>
+    <CudaCompile Include="tracer.cuh">
+      <Filter>Cuda kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kernel.cuh">
@@ -143,12 +161,6 @@
     <None Include="diamondSquare.cuh">
       <Filter>Cuda kernels</Filter>
     </None>
-    <None Include="tracer.cuh">
-      <Filter>Cuda kernels</Filter>
-    </None>
-    <None Include="Vec3f.cuh">
-      <Filter>Cuda kernels\Utils</Filter>
-    </None>
     <None Include="Sphere.cuh">
       <Filter>Cuda kernels\Utils</Filter>
     </None>
@@ -156,6 +168,12 @@
       <Filter>Cuda kernels\Utils</Filter>
     </None>
     <None Include="Options.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Vec.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Mat.cuh">
       <Filter>Cuda kernels\Utils</Filter>
     </None>
   </ItemGroup>

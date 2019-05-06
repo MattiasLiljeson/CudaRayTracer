@@ -16,6 +16,7 @@
 #include "thrust\system\system_error.h"
 
 #include <lodepng.h>
+#include "Camera.h"
 
 // 2^n + 1. For diamond square algorithm
 
@@ -34,6 +35,7 @@
 
 #define PIC_WIDTH 640
 #define PIC_HEIGHT 480
+//#define PIC_HEIGHT 1440
 
 void doView(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
             int nCmdShow);
@@ -62,6 +64,7 @@ void update() {
 
 }
 
+#ifndef _TEST
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow) {
     Profiler* prof = Profiler::getInstance();
@@ -71,12 +74,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DeviceHandler* deviceHandler =
         new DeviceHandler(hInstance, wndWidth, wndHeight);
     D3DDebugger d3dDbg(deviceHandler->getDevice());
-    DebugGUI::getInstance()->init(deviceHandler->getDevice(), PIC_WIDTH,
-                                  PIC_HEIGHT);
+    DebugGUI::getInstance()->init(deviceHandler->getDevice(), wndWidth, wndHeight);
+    DebugGUI::getInstance()->setSize("Camera", 200, 1400);
+    DebugGUI::getInstance()->setPosition("Camera", 0, 0);
+    DebugGUI::getInstance()->setVisible("Camera", false);
+
+    DebugGUI::getInstance()->setSize("Rays", 200, 1400);
+    DebugGUI::getInstance()->setPosition("Rays", 220, 0);
+    DebugGUI::getInstance()->setVisible("Rays", false);
+    DebugGUI::getInstance()->setSize("Mouse", 200, 1400);
+    DebugGUI::getInstance()->setPosition("Mouse", 420, 0);
+    DebugGUI::getInstance()->setVisible("Mouse", false);
 
     TextureRenderer* texRender = nullptr;
+    InputHandler* input = new InputHandler(&hInstance, deviceHandler->getHWnd());
+    Camera* camera = new Camera();
+
     try {
-        texRender = new TextureRenderer(deviceHandler, PIC_WIDTH, PIC_HEIGHT);
+        texRender = new TextureRenderer(deviceHandler, PIC_WIDTH, PIC_HEIGHT, input, camera );
     } catch (thrust::system_error e) {
         Utils::error(e.what());
     }
@@ -108,10 +123,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             }
         }
     }
+    delete input;
     delete texRender;
     delete deviceHandler;
     d3dDbg.reportLiveDeviceObjects();
 }
+
+#else
+
+#define CATCH_CONFIG_RUNNER
+//#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#include "../Catch2/single_include/catch2/catch.hpp"
+#include <iostream>
+int main(int argc, char** argv) {
+    // If the last argument is "-p", then pause after the tests are run.
+    // This allows us to run "leaks" on Mac OS X to check for memory leaks.
+    bool pause_after_test = true;
+    if (argc && std::string(argv[argc - 1]) == "-p") {
+        pause_after_test = true;
+        argc--;
+    }
+
+    int result = Catch::Session().run(argc, argv);
+
+    if (pause_after_test) {
+        printf("Press enter to continue.");
+        std::string s;
+        std::cin >> s;
+    }
+
+    return result;
+}
+
+#endif
 
 void copyFloatsToCharVector(vector<float>& p_arr,
                             vector<unsigned char>& out_img) {

@@ -10,6 +10,9 @@
 #include "Options.cuh"
 #include "Sphere.cuh"
 #include "GlobalCudaArray.h"
+#include "GlobalCudaVector.h"
+#include "InputHandler.h"
+#include "Camera.h"
 
 
 
@@ -19,6 +22,8 @@ class DeviceHandler;
 class TextureRenderer {
    private:
     DeviceHandler* m_deviceHandler;
+    InputHandler* input;
+    Camera* camera;
 
     ID3D11InputLayout* m_inputLayout;
     TextureSet m_textureSet;
@@ -29,8 +34,8 @@ class TextureRenderer {
 
     // cuda
     GlobalCudaArray<Options, 1> options;
-    GlobalCudaArray<Light, 2> lights;
-    GlobalCudaArray<Sphere, 2> spheres;
+    GlobalCudaVector<Light> lights;
+    GlobalCudaVector<Sphere> spheres;
 
     // Rasterizer states
     ID3D11RasterizerState* m_rsDefault;    // The default rasterizer state
@@ -40,7 +45,7 @@ class TextureRenderer {
 
    public:
     TextureRenderer(DeviceHandler* p_deviceHandler, int p_texWidth,
-                    int p_texHeight);
+                    int p_texHeight, InputHandler* p_input, Camera* camera);
     ~TextureRenderer();
 
     void update(float p_dt);

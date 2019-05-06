@@ -59,11 +59,14 @@ public:
 
 	static DebugGUI* getInstance();
 	void init( ID3D11Device* p_device, int p_wndWidth, int p_wndHeight );
+    Result addVar(string p_barName, Types p_type, Permissions p_permissions,
+                      string p_name, void* p_var);
 	Result addVar( string p_barName, Types p_type, Permissions p_permissions,
 		string p_name, void *p_var, string p_options );
 
 	void setSize( string p_barName, int p_x, int p_y );
-	void setPosition( string p_barName, int p_x, int p_y);
+    void setPosition(string p_barName, int p_x, int p_y);
+    void setVisible(string p_barName, bool visible);
 
 	/** Returns zero on fail and nonzero on success as per TwEventWin */
 	int updateMsgProc( HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam );

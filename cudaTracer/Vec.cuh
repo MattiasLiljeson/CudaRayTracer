@@ -1,89 +1,107 @@
-#ifndef VEC3F
-#define VEC3F
+#ifndef VEC
+#define VEC
 
 #include <cuda_runtime.h>
 
 template <typename T, int Size>
 class Vec {
-	public:
-	enum AXIS { X, Y, Z, W };
+   public:
+    enum AXIS { X, Y, Z, W };
 
     template <typename... Arg>
-    __host__ __device__ constexpr Vec(const Arg &... args) : data{args...} {}
+    __host__ __device__ constexpr Vec(const Arg&... args) : data{args...} {}
 
- 	__device__ constexpr Vec(const Vec& other) {
+    __device__ constexpr Vec(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] = other.data[i];
         }
-	}
+    }
 
-	__device__ Vec<T, Size> operator*(const float& r) const {
+    __device__ Vec<T, Size> operator*(const float& r) const {
         Vec<T, Size> v(const_cast<Vec& const>(*this));
-        for (T &d : v.data) {
+        for (T& d : v.data) {
             d *= r;
         }
         return v;
-	}
+    }
 
-	__device__ Vec operator*(const Vec<T, Size>& other) const {
+    __device__ Vec operator*(const Vec<T, Size>& other) const {
         Vec<T, Size> v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] *= other.data[i];
         }
         return v;
-	}
+    }
 
-	__device__ Vec operator-(const Vec& other) const {
+    __device__ Vec operator-(const Vec& other) const {
         Vec<T, Size> v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] -= other.data[i];
         }
         return v;
-	}
+    }
 
-	__device__ Vec operator+(const Vec& other) const {
+    __device__ Vec operator+(const Vec& other) const {
         Vec<T, Size> v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] += other.data[i];
         }
         return v;
-	}
+    }
 
-	__device__ Vec operator-() const {
+    __device__ Vec operator-() const {
         Vec<T, Size> v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = -data[i];
         }
         return v;
-	}
+    }
 
-	__device__ Vec& operator+=(const Vec& other) {
+    __device__ Vec& operator+=(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] += other.data[i];
         }
         return *this;
-	}
-	__device__ friend Vec operator*(const float& r, const Vec& other){
+    }
+
+    __device__ T& operator[](int idx) { return data[idx]; }
+
+    __device__ const T& operator[](int idx) const { return data[idx]; }
+
+    __device__ friend Vec operator*(const float& r, const Vec& other) {
         Vec<T, Size> v(other);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = other.data[i] * r;
         }
         return v;
-	}
+    }
 
-	__device__ Vec normalized() const{
+    __device__ __host__ friend bool operator==(const Vec& lhs, const Vec& rhs) {
+        for (int i = 0; i < Size; ++i) {
+            if (lhs[i] != rhs[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    __device__ __host__ friend bool operator!=(const Vec& lhs, const Vec& rhs) {
+        return !(lhs == rhs);
+    }
+
+    __device__ Vec normalized() const {
         float mag2 = 0.0f;
         for (int i = 0; i < Size; ++i) {
             mag2 += data[i] * data[i];
         }
         if (mag2 > 0) {
             float invMag = 1 / sqrtf(mag2);
-			return Vec(*this) * invMag; 
+            return Vec(*this) * invMag;
         }
         return Vec(*this);
     }
 
-    __device__ float dotProduct(const Vec& other) const{
+    __device__ float dot(const Vec& other) const {
         float sum = 0.0f;
         for (int i = 0; i < Size; ++i) {
             sum += data[i] * other.data[i];
@@ -91,12 +109,21 @@ class Vec {
         return sum;
     }
 
-    __device__ Vec reflect(const Vec& N) const{
-        return *this - N * 2 * dotProduct(N);
+    __device__ Vec cross(const Vec& other) const {
+        assert(Size == 3);  // only valid for 3d space
+        Vec<T, Size> v;
+        v[X] = data[Y] * other[Z] - data[Z] * other[Y];
+        v[Y] = data[Z] * other[X] - data[X] * other[Z];
+        v[Z] = data[X] * other[Y] - data[Y] * other[X];
+        return v;
     }
 
-	//private:
-	T data[Size];
+    __device__ Vec reflect(const Vec& N) const {
+        return *this - N * 2 * dot(N);
+    }
+
+    // private:
+    T data[Size];
 
     /*
     __host__ __device__ static Vec<float, 3> vec3f(float x, float y, float z) {
@@ -118,4 +145,4 @@ typedef Vec<float, 3> Vec3f;
 //
 //__host__ __device__ Vec<float, 3> vec3f();
 
-#endif  // !VEC3F
+#endif  // VEC

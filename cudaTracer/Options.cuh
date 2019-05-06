@@ -1,5 +1,5 @@
 #include <cstdint>
-#include "Vec3f.cuh"
+#include "Vec.cuh"
 #ifndef OPTIONS_CUH
 #define OPTIONS_CUH
 

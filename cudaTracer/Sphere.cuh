@@ -1,7 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "Vec3f.cuh"
+#include "Vec.cuh"
 
 
 enum MaterialType { DIFFUSE_AND_GLOSSY, REFLECTION_AND_REFRACTION, REFLECTION };
@@ -77,13 +77,14 @@ inline __device__ bool solveQuadratic(const float &a, const float &b,
     return true;
 }
 
-struct Sphere : public Object {
+struct Sphere {
+    Object object;
     Vec3f center;
     float radius, radius2;
 
     __host__ __device__ static Sphere sphere(const Vec3f &c, const float &r) {
         Sphere s;
-        Object::init(&s);
+        Object::init(&s.object);
         s.center = c;
         s.radius = r;
         s.radius2 = r * r;
@@ -93,9 +94,9 @@ struct Sphere : public Object {
                               uint32_t &index, Vec2f &uv) const {
         // analytic solution
         Vec3f L = orig - center;
-        float a = dir.dotProduct(dir);
-        float b = 2 * dir.dotProduct(L);
-        float c = L.dotProduct(L) - radius2;
+        float a = dir.dot(dir);
+        float b = 2 * dir.dot(L);
+        float c = L.dot(L) - radius2;
         float t0, t1;
         if (!solveQuadratic(a, b, c, t0, t1)) return false;
         if (t0 < 0) t0 = t1;

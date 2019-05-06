@@ -72,6 +72,13 @@ void DebugGUI::init(ID3D11Device* p_device, int p_wndWidth, int p_wndHeight) {
 
 DebugGUI::Result DebugGUI::addVar(string p_barName, Types p_type,
                                   Permissions p_permissions, string p_name,
+                                  void* p_var) {
+    return addVar(p_barName, p_type, p_permissions, p_name, p_var,
+                  "opened=true");
+}
+
+DebugGUI::Result DebugGUI::addVar(string p_barName, Types p_type,
+                                  Permissions p_permissions, string p_name,
                                   void* p_var, string p_options) {
     TwBar* bar = barFromString(p_barName);
 
@@ -106,12 +113,17 @@ void DebugGUI::setPosition(string p_barName, int p_x, int p_y) {
         TwDefine(stringFromParams(p_barName, "", "position", p_x, p_y).c_str());
 }
 
+void DebugGUI::setVisible(string p_barName, bool visible) {
+    int result;
+    result = TwDefine(stringFromParams(p_barName, "", "visible", visible).c_str());
+}
+
 void DebugGUI::draw() {
-#ifdef USE_DEBUG_GUI
+    //#ifdef USE_DEBUG_GUI
     if (!TwDraw()) {
         Utils::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
     }
-#endif
+    //#endif
 }
 
 int DebugGUI::updateMsgProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam) {

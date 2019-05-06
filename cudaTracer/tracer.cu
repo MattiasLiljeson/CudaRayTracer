@@ -1,26 +1,105 @@
-#include <curand_kernel.h>
-#include "Vec3f.cuh"
+//#include <curand_kernel.h>
+#include "Vec.cuh"
 #include "Options.cuh"
 #include "Sphere.cuh"
 #include "Light.cuh"
+#include "Mat.cuh"
 #include "device_launch_parameters.h"
 
 #include <cuda_runtime.h>
 #include "cuda.h"
 #include "cudaUtils.h"
+#include "tracer.cuh"
 
 enum colors { RED, GREEN, BLUE, ALPHA };
+
+__device__ __constant__ Vec3f C_ORIG;
+__device__ __constant__ size_t C_PITCH;
+__device__ __constant__ Mat44f C_CAMERA;
 
 #define INF 2e10f
 
 ///////////////scratchApixel
 
-__constant__ Vec3f C_ORIG;
-__constant__ size_t C_PITCH;
+__device__ float clamp(const float &lo, const float &hi, const float &v) {
+    return fmax(lo, fmin(hi, v));
+}
 
-__device__ bool trace(const Sphere *spheres, const int sphereCnt, const Vec3f &orig,
-                      const Vec3f &dir, float &tNear,
-                      uint32_t &index, Vec2f &uv, const Sphere **hitObject) {
+// [comment]
+// Compute Fresnel equation
+//
+// \param I is the incident view direction
+//
+// \param N is the normal at the intersection point
+//
+// \param ior is the mateural refractive index
+//
+// \param[out] kr is the amount of light reflected
+// [/comment]
+__device__ void fresnel(const Vec3f &I, const Vec3f &N, const float &ior, float &kr) {
+    float cosi = clamp(-1, 1, I.dot(N));
+    float etai = 1, etat = ior;
+    if (cosi > 0) {
+        float tmp = etat;
+        etat = etai;
+        etai = tmp;
+    }
+    // Compute sini using Snell's law
+    float sint = etai / etat * sqrtf(fmax(0.f, 1 - cosi * cosi));
+    // Total internal reflection
+    if (sint >= 1) {
+        kr = 1;
+    } else {
+        float cost = sqrtf(fmax(0.f, 1 - sint * sint));
+        cosi = fabsf(cosi);
+        float Rs =
+            ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
+        float Rp =
+            ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
+        kr = (Rs * Rs + Rp * Rp) / 2;
+    }
+    // As a consequence of the conservation of energy, transmittance is given
+    // by: kt = 1 - kr;
+}
+
+// [comment]
+// Compute refraction direction using Snell's law
+//
+// We need to handle with care the two possible situations:
+//
+//    - When the ray is inside the object
+//
+//    - When the ray is outside.
+//
+// If the ray is outside, you need to make cosi positive cosi = -N.I
+//
+// If the ray is inside, you need to invert the refractive indices and negate
+// the normal N
+// [/comment]
+__device__ Vec3f refract(const Vec3f &I, const Vec3f &N, const float &ior) {
+    float cosi = clamp(-1, 1, I.dot(N));
+    float etai = 1, etat = ior;
+    Vec3f n = N;
+    if (cosi < 0) {
+        cosi = -cosi;
+    } else {
+        float tmp = etai;
+        etai = etat;
+        etat = tmp;
+        //std::swap(etai, etat);
+        n = -N;
+    }
+    float eta = etai / etat;
+    float k = 1 - eta * eta * (1 - cosi * cosi);
+    return k < 0 ? 0 : eta * I + (eta * cosi - sqrtf(k)) * n;
+}
+
+
+//__device__ bool trace(const Sphere *spheres, const int sphereCnt, const Vec3f &orig,
+//                      const Vec3f &dir, float &tNear,
+//                      uint32_t &index, Vec2f &uv, const Sphere **hitObject) {
+bool Trace::trace(const Vec3f &orig, const Vec3f &dir, float &tNear, uint32_t &index,
+           Vec2f &uv, const Sphere **hitObject){
     *hitObject = nullptr;
     for (uint32_t k = 0; k < sphereCnt; ++k) {
         float tNearK = INF;
@@ -38,12 +117,99 @@ __device__ bool trace(const Sphere *spheres, const int sphereCnt, const Vec3f &o
     return (*hitObject != nullptr);
 }
 
-__device__ Vec3f castRay(const Options *options, const Light *lights,
-                         const int lightCnt,
-                         const Sphere *spheres,
-                         const int sphereCnt, const Vec3f &orig,
-                         const Vec3f &dir, uint32_t depth,
-                         bool test = false) {
+Trace::Trace(const Options *options, const Light *lights, const int lightCnt,
+             const Sphere *spheres, const int sphereCnt, unsigned char *surface)
+    : options(options),
+      lights(lights),
+      lightCnt(lightCnt),
+      spheres(spheres),
+      sphereCnt(sphereCnt),
+      surface(surface) {}
+
+Vec3f Trace::reflectionAndRefraction(const Vec3f& dir, uint32_t& index,
+    Vec2f& uv, Vec2f& st,
+    const Sphere* hitObject,
+    const Vec3f& hitPoint, const Vec3f& N,
+    const int depth) {
+    Vec3f hitColor = options->backgroundColor;
+    Vec3f reflectionDirection = N.reflect(dir).normalized();
+    Vec3f refractionDirection = refract(dir, N, hitObject->object.ior).normalized();
+    Vec3f reflectionRayOrig = (reflectionDirection.dot(N) < 0)
+                                  ? hitPoint - N * options->bias
+                                  : hitPoint + N * options->bias;
+    Vec3f refractionRayOrig = (refractionDirection.dot(N) < 0)
+                                  ? hitPoint - N * options->bias
+                                  : hitPoint + N * options->bias;
+    Vec3f reflectionColor = castRay(reflectionRayOrig, reflectionDirection, depth + 1);
+    Vec3f refractionColor = castRay(refractionRayOrig, refractionDirection, depth + 1);
+    float kr;
+    fresnel(dir, N, hitObject->object.ior, kr);
+    hitColor = reflectionColor * kr + refractionColor * (1 - kr);
+    return hitColor;
+}
+
+
+Vec3f Trace::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv,
+                              Vec2f &st, const Sphere *hitObject, const Vec3f &hitPoint,
+                        const Vec3f &N, const int depth) {
+    Vec3f hitColor = options->backgroundColor;
+    float kr = 0.5f;
+    //fresnel(dir, N, hitObject->object.ior, kr);
+    Vec3f reflectionDirection = dir.reflect(N);
+    Vec3f reflectionRayOrig = (reflectionDirection.dot(N) < 0)
+                                  ? hitPoint + N * options->bias
+                                  : hitPoint - N * options->bias;
+    hitColor = castRay(reflectionRayOrig.normalized(),
+                       reflectionDirection.normalized(),
+                       depth + 1) *
+               kr;
+    return hitColor;
+}
+
+Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
+                                  Vec2f &st, const Sphere *hitObject,
+                                  const Vec3f &hitPoint, const Vec3f &N, const int depth){
+    Vec3f hitColor = options->backgroundColor;
+    // [comment]
+    // We use the Phong illumation model int the default case. The
+    // phong model is composed of a diffuse and a specular
+    // reflection component.
+    // [/comment]
+    Vec3f lightAmt = Vec<float, 3>(0.0f, 0.0f, 0.0f);
+    Vec3f specularColor = Vec<float, 3>(0.f, 0.0f, 0.0f);
+    Vec3f shadowPointOrig =
+        (dir.dot(N) < 0) ? N * options->bias : hitPoint - N * options->bias;
+    // [comment]
+    // Loop over all lights in the scene and sum their contribution
+    // up We also apply the lambert cosine law here though we
+    // haven't explained yet what this means.
+    // [/comment]
+    for (uint32_t i = 0; i < lightCnt; ++i) {
+        Vec3f lightDir = lights[i].position - hitPoint;
+        // square of the distance between hitPoint and the light
+        float lightDistance2 = lightDir.dot(lightDir);
+        lightDir = lightDir.normalized();
+        float LdotN = fmaxf(0.f, lightDir.dot(N));
+        Sphere *shadowHitObject = nullptr;
+        float tNearShadow = INF;
+        // is the point in shadow, and is the nearest occluding
+        // object closer to the object than the light itself?
+        bool inShadow = trace(shadowPointOrig, lightDir,
+                              tNearShadow, index, uv, &shadowHitObject) &&
+                        tNearShadow * tNearShadow < lightDistance2;
+        lightAmt += lights[i].intensity * LdotN * (1 - inShadow);
+        Vec3f reflectionDirection = (-lightDir).reflect(N);
+        float dotp = fmaxf(0.f, -reflectionDirection.dot(dir));
+        specularColor += powf(dotp, hitObject->object.specularExponent) *
+                         lights[i].intensity;
+    }
+    hitColor = lightAmt * hitObject->object.evalDiffuseColor(st) *
+               hitObject->object.Kd;
+    hitColor += specularColor * hitObject->object.Ks;
+    return hitColor;
+}
+
+Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth){
     if (depth > options->maxDepth) {
         return options->backgroundColor;
     }
@@ -51,94 +217,22 @@ __device__ Vec3f castRay(const Options *options, const Light *lights,
     float tnear = INF;
     Vec2f uv;
     uint32_t index = 0;
-    const Sphere *hitObject = nullptr;
-    if (trace(spheres, sphereCnt, orig, dir, tnear, index, uv, &hitObject)) {
-        Vec3f tmp2 = hitObject->center;
+    Sphere *hitObject = nullptr;
+    if (trace(orig, dir, tnear, index, uv, &hitObject)) {
         Vec3f hitPoint = orig + dir * tnear;
         Vec3f N;   // normal
         Vec2f st;  // st coordinates
         hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
-        Vec3f tmp = hitPoint;
-        switch (hitObject->materialType) {
-            // case REFLECTION_AND_REFRACTION: {
-            //    Vec3f reflectionDirection = normalize(reflect(dir, N));
-            //    Vec3f refractionDirection =
-            //        normalize(refract(dir, N, hitObject->ior));
-            //    Vec3f reflectionRayOrig =
-            //        (dotProduct(reflectionDirection, N) < 0)
-            //            ? hitPoint - N * options.bias
-            //            : hitPoint + N * options.bias;
-            //    Vec3f refractionRayOrig =
-            //        (dotProduct(refractionDirection, N) < 0)
-            //            ? hitPoint - N * options.bias
-            //            : hitPoint + N * options.bias;
-            //    Vec3f reflectionColor =
-            //        castRay(reflectionRayOrig, reflectionDirection, objects,
-            //                lights, options, depth + 1, 1);
-            //    Vec3f refractionColor =
-            //        castRay(refractionRayOrig, refractionDirection, objects,
-            //                lights, options, depth + 1, 1);
-            //    float kr;
-            //    fresnel(dir, N, hitObject->ior, kr);
-            //    hitColor = reflectionColor * kr + refractionColor * (1 - kr);
-            //    break;
-            //}
-            // case REFLECTION: {
-            //    float kr;
-            //    fresnel(dir, N, hitObject->ior, kr);
-            //    Vec3f reflectionDirection = reflect(dir, N);
-            //    Vec3f reflectionRayOrig =
-            //        (dotProduct(reflectionDirection, N) < 0)
-            //            ? hitPoint + N * options.bias
-            //            : hitPoint - N * options.bias;
-            //    hitColor = castRay(reflectionRayOrig, reflectionDirection,
-            //                       objects, lights, options, depth + 1) *
-            //               kr;
-            //    break;
-            //}
-            default: {
-                // [comment]
-                // We use the Phong illumation model int the default case. The
-                // phong model is composed of a diffuse and a specular
-                // reflection component.
-                // [/comment]
-                Vec3f lightAmt = Vec<float, 3>(0.0f, 0.0f, 0.0f);
-                Vec3f specularColor = Vec<float, 3>(0.f, 0.0f, 0.0f);
-                Vec3f shadowPointOrig = (dir.dotProduct(N) < 0)
-                                            ? N * options->bias
-                                            : hitPoint - N * options->bias;
-                // [comment]
-                // Loop over all lights in the scene and sum their contribution
-                // up We also apply the lambert cosine law here though we
-                // haven't explained yet what this means.
-                // [/comment]
-                for (uint32_t i = 0; i < lightCnt; ++i) {
-                    Vec3f lightDir = lights[i].position - hitPoint;
-                    // square of the distance between hitPoint and the light
-                    float lightDistance2 =
-                        lightDir.dotProduct(lightDir);
-                    lightDir = lightDir.normalized();
-                    float LdotN = fmaxf(0.f, lightDir.dotProduct(N));
-                    Sphere *shadowHitObject = nullptr;
-                    float tNearShadow = INF;
-                    // is the point in shadow, and is the nearest occluding
-                    // object closer to the object than the light itself?
-                    bool inShadow =
-                        trace(spheres, sphereCnt, shadowPointOrig, lightDir, tNearShadow, index, uv,
-                              &shadowHitObject) &&
-                        tNearShadow * tNearShadow < lightDistance2;
-                    lightAmt += lights[i].intensity * LdotN * (1 - inShadow);
-                    Vec3f reflectionDirection = (-lightDir).reflect(N);
-                    float dotp = fmaxf(0.f, -reflectionDirection.dotProduct(dir));
-					specularColor +=
-                        powf(dotp,hitObject->specularExponent) *
-                        lights[i].intensity; 
-                
-                }
-                hitColor = lightAmt * hitObject->evalDiffuseColor(st) * hitObject->Kd;
-                hitColor += specularColor * hitObject->Ks;
-                break;
-            }
+        switch (hitObject->object.materialType) {
+            case REFLECTION_AND_REFRACTION:
+                return reflectionAndRefraction(dir, index, uv, st, hitObject, hitPoint, N, depth);
+            case REFLECTION:
+                return reflection(dir, index, uv, st, hitObject, hitPoint, N, depth);
+            case DIFFUSE_AND_GLOSSY:
+            default:
+                return diffuseAndGlossy(dir, index, uv, st, hitObject,
+                                          hitPoint,
+                                        N, depth);
         }
     }
 
@@ -161,9 +255,12 @@ __global__ void kernel(const Options *options, const Light *lights, const int li
                   options->imageAspectRatio * options->scale;
     float ndc_y =
         (1.0f - 2.0f * (y + 0.5f) / (float)options->height) * options->scale;
-    Vec3f dir = Vec3f(ndc_x, ndc_y, -1).normalized();
-    Vec3f result = castRay(options, lights, lightCnt, spheres, sphereCnt, C_ORIG, dir, 0);
-
+    Vec3f dir = Vec3f(ndc_x, ndc_y, 1).normalized();
+    dir = C_CAMERA.multVec(dir);
+    dir = dir.normalized();    
+    //Vec3f result = castRay(options, lights, lightCnt, spheres, sphereCnt, C_ORIG, dir, 0);
+    Trace trace(options, lights, lightCnt, spheres, sphereCnt, surface);
+    Vec3f result = trace.castRay(C_ORIG, dir, 0);
     // get a pointer to the pixel at (x,y)
     float *pixel = (float *)(surface + y * C_PITCH) + 4 * x;
 
@@ -172,19 +269,18 @@ __global__ void kernel(const Options *options, const Light *lights, const int li
     pixel[BLUE] = result.data[Vec3f::Z];
     pixel[ALPHA] = 1.0f;
 
-	//pixel[RED] = ndc_x+1.0f;
-    //pixel[GREEN] = ndc_y + 1.0f;
-    //pixel[BLUE] = 1.0f;
+	//pixel[RED]   = 0; //dir[Vec3f::X];
+    //pixel[GREEN] = 0; //dir[Vec3f::Y];
+    //pixel[BLUE] = -dir[Vec3f::Z];
     //pixel[ALPHA] = 1.0f;
 }
 
-void pre(const void *surface, int width, int height, size_t pitch) {}
-
-void main(const Options *options, const Light *lights, const int lightCnt,
+void cudamain(const Options *options, const Light *lights, const int lightCnt,
           const Sphere *spheres, const int sphereCnt, const void *surface,
-          const int width, const int height, size_t pitch, const Vec3f& orig) {
+          const int width, const int height, size_t pitch, const Vec3f& orig, const Mat44f& camera) {
     gpuErrchk(cudaMemcpyToSymbol(C_ORIG, &orig, sizeof(Vec3f)));
     gpuErrchk(cudaMemcpyToSymbol(C_PITCH, &pitch, sizeof(size_t)));
+    gpuErrchk(cudaMemcpyToSymbol(C_CAMERA, &camera.inversed(), sizeof(Mat44f)));
     gpuErrchk(cudaPeekAtLastError());
 
     dim3 threads = dim3(16, 16);  // block dimensions are fixed to be 256 threads
@@ -197,154 +293,3 @@ void main(const Options *options, const Light *lights, const int lightCnt,
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 }
-
-////////// cuda by example
-/*
-#define DIM 1024
-#define rnd(x) (x * rand() / RAND_MAX)
-
-struct Sphere {
-    float r, b, g;
-    float radius;
-    float x, y, z;
-    __device__ float hit(float ox, float oy, float *n) {
-        float dx = ox - x;
-        float dy = oy - y;
-        if (dx * dx + dy * dy < radius * radius) {
-            float dz = sqrtf(radius * radius - dx * dx - dy * dy);
-            *n = dz / sqrtf(radius * radius);
-            return dz + z;
-        }
-        return -INF;
-    }
-};
-#define SPHERES 20
-
-__constant__ Sphere s[SPHERES];
-
-__global__ void kernel(unsigned char *surface) {
-    // map from threadIdx/BlockIdx to pixel position
-    int x = threadIdx.x + blockIdx.x * blockDim.x;
-    int y = threadIdx.y + blockIdx.y * blockDim.y;
-
-    // in the case where, due to quantization into grids, we have
-    // more threads than pixels, skip the threads which don't
-    // correspond to valid pixels
-    if (x >= C_WIDTH || y >= C_HEIGHT) return;
-
-    int offset = x + y * blockDim.x * gridDim.x;
-    float ox = (x - DIM / 2);
-    float oy = (y - DIM / 2);
-
-    float r = 0, g = 0, b = 0;
-    float maxz = -INF;
-    for (int i = 0; i < SPHERES; i++) {
-        float n;
-        float t = s[i].hit(ox, oy, &n);
-        if (t > maxz) {
-            float fscale = n;
-            r = s[i].r * fscale;
-            g = s[i].g * fscale;
-            b = s[i].b * fscale;
-            maxz = t;
-        }
-    }
-
-    
-
-
-
-
-//surface[offset * 4 + 0] = (int)(r * 255);
-//surface[offset * 4 + 1] = (int)(g * 255);
-//surface[offset * 4 + 2] = (int)(b * 255);
-//surface[offset * 4 + 3] = 255;
-
-
-    // get a pointer to the pixel at (x,y)
-    float *pixel = (float *)(surface + y * C_PITCH) + 4 * x;
-
-    pixel[RED] = r;
-    pixel[GREEN] = g;
-    pixel[BLUE] = b;
-    pixel[ALPHA] = 1.0f;
-}
-
-void main(const void *surface, int width, int height, size_t pitch,
-          unsigned char *p_rngStates) {
-    //
-    //DataBlock data;
-    //// capture the start time
-    //cudaEvent_t start, stop;
-    //HANDLE_ERROR(cudaEventCreate(&start));
-    //HANDLE_ERROR(cudaEventCreate(&stop));
-    //HANDLE_ERROR(cudaEventRecord(start, 0));
-        //
-    //CPUBitmap bitmap(DIM, DIM, &data);
-    //unsigned char *dev_bitmap;
-        //
-    //// allocate memory on the GPU for the output bitmap
-    //HANDLE_ERROR(cudaMalloc((void **)&dev_bitmap, bitmap.image_size()));
-    //
-    // allocate temp memory, initialize it, copy to constant
-    // memory on the GPU, then free our temp memory
-    Sphere *temp_s = (Sphere *)malloc(sizeof(Sphere) * SPHERES);
-    for (int i = 0; i < SPHERES; i++) {
-        temp_s[i].r = rnd(1.0f);
-        temp_s[i].g = rnd(1.0f);
-        temp_s[i].b = rnd(1.0f);
-        temp_s[i].x = rnd(1000.0f) - 500;
-        temp_s[i].y = rnd(1000.0f) - 500;
-        temp_s[i].z = rnd(1000.0f) - 500;
-        temp_s[i].radius = rnd(100.0f) + 20;
-    }
-    gpuErrchk(cudaMemcpyToSymbol(s, temp_s, sizeof(Sphere) * SPHERES));
-    free(temp_s);
-
-    cudaMemcpyToSymbol(C_PITCH, &pitch, sizeof(size_t));
-    cudaMemcpyToSymbol(C_WIDTH, &width, sizeof(int));
-    cudaMemcpyToSymbol(C_HEIGHT, &height, sizeof(int));
-    gpuErrchk(cudaPeekAtLastError());
-
-    // generate a bitmap from our sphere data
-    //dim3 grids(DIM / 16, DIM / 16);
-    //dim3 threads(16, 16);
-    dim3 threads =
-        dim3(16, 16);  // block dimensions are fixed to be 256 threads
-    dim3 grids = dim3((width + threads.x - 1) / threads.x,
-                      (height + threads.y - 1) / threads.y);
-
-    // Do the magic
-    //cuke_clear<<<grids, threads>>>((unsigned char *)surface);
-    //gpuErrchk(cudaPeekAtLastError());
-    //gpuErrchk(cudaDeviceSynchronize());
-        
-
-
-
-
-
-    kernel<<<grids, threads>>>((unsigned char *)surface);
-
-//
-//// copy our bitmap back from the GPU for display
-//HANDLE_ERROR(cudaMemcpy(bitmap.get_ptr(), dev_bitmap, bitmap.image_size(),
-//                        cudaMemcpyDeviceToHost));
-//
-//// get stop time, and display the timing results
-//HANDLE_ERROR(cudaEventRecord(stop, 0));
-//HANDLE_ERROR(cudaEventSynchronize(stop));
-//float elapsedTime;
-//HANDLE_ERROR(cudaEventElapsedTime(&elapsedTime, start, stop));
-//printf("Time to generate:  %3.1f ms\n", elapsedTime);
-//
-//HANDLE_ERROR(cudaEventDestroy(start));
-//HANDLE_ERROR(cudaEventDestroy(stop));
-//
-//HANDLE_ERROR(cudaFree(dev_bitmap));
-//
-//// display
-//bitmap.display_and_exit();
-//
-}
-*/
