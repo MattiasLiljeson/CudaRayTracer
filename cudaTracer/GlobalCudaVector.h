@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 #include "cudaUtils.h"
 
@@ -13,6 +14,7 @@ class GlobalCudaVector {
     void copyToDevice() {
         if (memChanged) {
             allocateOnDevice();
+            memChanged = false;
         }
         gpuErrchk(
             cudaMemcpy(cudaMem, &hostMem[0], byteCnt(), cudaMemcpyDefault));
@@ -49,6 +51,12 @@ class GlobalCudaVector {
     }
 
     void allocateOnDevice() {
+        #ifdef _DEBUG
+        std::cerr << "Allocating CUDA mem for " << size() << " '"
+                  << typeid(T).name() << "' (" << sizeof(T) << "). Totally "
+                  << byteCnt() << " bytes" << std::endl;
+        #endif
+
         freeCudaMem();
         gpuErrchk(cudaMalloc((void**)&cudaMem, byteCnt()));
     }
