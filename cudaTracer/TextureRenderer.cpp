@@ -345,12 +345,14 @@ void TextureRenderer::initInterop() {
     const float radStep = (2 * PI) / numLights;
 
     for (int i = 0; i < 10; ++i) {
-        Vec3f position(sin(i * radStep) * 5, 0.0f, cos(i * radStep) * 5);
+        Vec3f position(sin(i * radStep) * 5, cos(i * radStep),
+                       cos(i * radStep) * 5);
         Vec3f intensity(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
                         rand() / (float)RAND_MAX);
         lights.pushBack(Light(position, intensity));
     }
     lights.copyToDevice();
+
 
     const int sphereCntSqrt = 5;
     for (int i = 0; i < sphereCntSqrt; ++i) {
@@ -358,24 +360,24 @@ void TextureRenderer::initInterop() {
             int idx = i * sphereCntSqrt + j;
             // std::cerr << idx << std::endl;
             float scale = 1.0f / sphereCntSqrt;
-            float x = -sphereCntSqrt + i * 2.0f;
-            float z = -sphereCntSqrt + j * 2.0f;
-            Sphere s = Sphere::sphere(Vec3f(x, -4.0f, z), 1.0f);
-            s.object.materialType = DIFFUSE_AND_GLOSSY;
-            s.object.diffuseColor = Vec3f(0.1f, 0.1f, 0.1f);
+            float x = -sphereCntSqrt + i * 4.0f;
+            float z = -sphereCntSqrt + j * 4.0f;
+            Sphere s = Sphere(Vec3f(x, -4.0f, z), 1.0f);
+            s.materialType = DIFFUSE_AND_GLOSSY;
+            s.diffuseColor = Vec3f(0.1f, 0.1f, 0.1f);
             spheres.pushBack(s);
         }
     }
 
-    Sphere mirrorBall = Sphere::sphere(Vec<float, 3>(0.0f, -1.0f, -3.0f), 1.0f);
-    mirrorBall.object.materialType = REFLECTION;
-    mirrorBall.object.diffuseColor = Vec<float, 3>(0.6f, 0.7f, 0.8f);
+    Sphere mirrorBall = Sphere(Vec<float, 3>(0.0f, -1.0f, -3.0f), 1.0f);
+    mirrorBall.materialType = REFLECTION;
+    mirrorBall.diffuseColor = Vec<float, 3>(0.6f, 0.7f, 0.8f);
     spheres.pushBack(mirrorBall);
 
-    Sphere glassBall = Sphere::sphere(Vec<float, 3>(0.5f, -1.5f, 0.5f), 1.5f);
-    glassBall.object.ior = 1.5f;
-    glassBall.object.materialType = REFLECTION_AND_REFRACTION;
-    glassBall.object.diffuseColor = Vec<float, 3>(0.8f, 0.7f, 0.6f);
+    Sphere glassBall = Sphere(Vec<float, 3>(0.5f, -1.5f, 0.5f), 1.5f);
+    glassBall.ior = 1.5f;
+    glassBall.materialType = REFLECTION_AND_REFRACTION;
+    glassBall.diffuseColor = Vec<float, 3>(0.8f, 0.7f, 0.6f);
     spheres.pushBack(glassBall);
 
     spheres.copyToDevice();
