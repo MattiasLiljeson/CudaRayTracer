@@ -176,5 +176,14 @@
     <None Include="Mat.cuh">
       <Filter>Cuda kernels\Utils</Filter>
     </None>
+    <None Include="Math.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="MaterialType.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Materials.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
   </ItemGroup>
 </Project>
