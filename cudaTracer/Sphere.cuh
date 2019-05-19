@@ -2,44 +2,10 @@
 #define SPHERE_H
 
 #include "Vec.cuh"
-
-
-enum MaterialType { DIFFUSE_AND_GLOSSY, REFLECTION_AND_REFRACTION, REFLECTION };
-
-struct Object {
-    // material properties
-    MaterialType materialType;
-    float ior;
-    float Kd, Ks;
-    Vec3f diffuseColor;
-    float specularExponent;
-
-    __host__ __device__ static Object *init(Object *o) {
-        o->materialType = DIFFUSE_AND_GLOSSY;
-        o->ior = 1.3f;
-        o->Kd = 0.8f;
-        o->Ks = 0.2f;
-        o->specularExponent = 25.0f;
-        o->diffuseColor = Vec<float,3>(0.2f, 0.2f, 0.2f);
-        return o;
-    }
-
-    //__device__ virtual ~Object() {}
-    //__device__ virtual bool intersect(const Vec3f &orig, const Vec3f &dir,
-    //                                  float &tnear, uint32_t &index,
-    //                                  Vec2f &uv) const = 0;
-    //__device__ virtual void getSurfaceProperties(const Vec3f &, const Vec3f &,
-    //                                             const uint32_t &, const Vec2f
-    //                                             &, Vec3f &, Vec2f &) const =
-    //                                             0;
-    __device__ Vec3f evalDiffuseColor(const Vec2f &) const {
-        return diffuseColor;
-    }
-};
+#include "Object.cuh"
 
 inline __device__ bool solveQuadratic(const float &a, const float &b,
-                                      const float &c,
-                               float &x0, float &x1) {
+                                      const float &c, float &x0, float &x1) {
     float discr = b * b - 4 * a * c;
     if (discr < 0)
         return false;

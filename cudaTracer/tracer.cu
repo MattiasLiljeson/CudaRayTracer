@@ -224,11 +224,11 @@ Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth){
         Vec2f st;  // st coordinates
         hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
         switch (hitObject->object.materialType) {
-            case REFLECTION_AND_REFRACTION:
+            case Object::REFLECTION_AND_REFRACTION:
                 return reflectionAndRefraction(dir, index, uv, st, hitObject, hitPoint, N, depth);
-            case REFLECTION:
+            case Object::REFLECTION:
                 return reflection(dir, index, uv, st, hitObject, hitPoint, N, depth);
-            case DIFFUSE_AND_GLOSSY:
+            case Object::DIFFUSE_AND_GLOSSY:
             default:
                 return diffuseAndGlossy(dir, index, uv, st, hitObject,
                                           hitPoint,

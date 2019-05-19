@@ -96,6 +96,9 @@
     <ClInclude Include="GlobalCudaVector.h">
       <Filter>Source\Cuda utils</Filter>
     </ClInclude>
+    <ClInclude Include="Object.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

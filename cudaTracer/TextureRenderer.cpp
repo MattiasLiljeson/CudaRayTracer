@@ -361,21 +361,21 @@ void TextureRenderer::initInterop() {
             float x = -sphereCntSqrt + i * 2.0f;
             float z = -sphereCntSqrt + j * 2.0f;
             Sphere s = Sphere::sphere(Vec3f(x, -4.0f, z), 1.0f);
-            s.object.materialType = DIFFUSE_AND_GLOSSY;
+            s.object.materialType = Object::DIFFUSE_AND_GLOSSY;
             s.object.diffuseColor = Vec3f(0.1f, 0.1f, 0.1f);
             spheres.pushBack(s);
         }
     }
 
     Sphere mirrorBall = Sphere::sphere(Vec<float, 3>(0.0f, -1.0f, -3.0f), 1.0f);
-    mirrorBall.object.materialType = REFLECTION;
-    mirrorBall.object.diffuseColor = Vec<float, 3>(0.6f, 0.7f, 0.8f);
+    mirrorBall.object.materialType = Object::REFLECTION;
+    mirrorBall.object.diffuseColor = Vec3f(0.6f, 0.7f, 0.8f);
     spheres.pushBack(mirrorBall);
 
     Sphere glassBall = Sphere::sphere(Vec<float, 3>(0.5f, -1.5f, 0.5f), 1.5f);
     glassBall.object.ior = 1.5f;
-    glassBall.object.materialType = REFLECTION_AND_REFRACTION;
-    glassBall.object.diffuseColor = Vec<float, 3>(0.8f, 0.7f, 0.6f);
+    glassBall.object.materialType = Object::REFLECTION_AND_REFRACTION;
+    glassBall.object.diffuseColor = Vec3f(0.8f, 0.7f, 0.6f);
     spheres.pushBack(glassBall);
 
     spheres.copyToDevice();
