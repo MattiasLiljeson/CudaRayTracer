@@ -96,6 +96,9 @@
     <ClInclude Include="GlobalCudaVector.h">
       <Filter>Source\Cuda utils</Filter>
     </ClInclude>
+    <ClInclude Include="Mesh.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -115,6 +118,9 @@
     </Filter>
     <Filter Include="Source\Cuda utils">
       <UniqueIdentifier>{cc409995-ec9a-4db4-b30e-06e16149d6b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cuda kernels\Shapes">
+      <UniqueIdentifier>{a6a47d45-48cb-42bb-ac3a-68509861a128}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -161,9 +167,6 @@
     <None Include="diamondSquare.cuh">
       <Filter>Cuda kernels</Filter>
     </None>
-    <None Include="Sphere.cuh">
-      <Filter>Cuda kernels\Utils</Filter>
-    </None>
     <None Include="Light.cuh">
       <Filter>Cuda kernels\Utils</Filter>
     </None>
@@ -177,7 +180,10 @@
       <Filter>Cuda kernels\Utils</Filter>
     </None>
     <None Include="Object.cuh">
-      <Filter>Cuda kernels\Utils</Filter>
+      <Filter>Cuda kernels\Shapes</Filter>
+    </None>
+    <None Include="Sphere.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
     </None>
   </ItemGroup>
 </Project>

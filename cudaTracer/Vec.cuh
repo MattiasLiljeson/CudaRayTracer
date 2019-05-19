@@ -3,6 +3,10 @@
 
 #include <cuda_runtime.h>
 
+namespace axis {
+enum AXIS { X, Y, Z, W };
+}
+
 template <typename T, int Size>
 class Vec {
    public:
@@ -18,7 +22,7 @@ class Vec {
     }
 
     __device__ Vec<T, Size> operator*(const float& r) const {
-        Vec<T, Size> v(const_cast<Vec& const>(*this));
+        Vec v(const_cast<Vec const&>(*this));
         for (T& d : v.data) {
             d *= r;
         }
@@ -26,7 +30,7 @@ class Vec {
     }
 
     __device__ Vec operator*(const Vec<T, Size>& other) const {
-        Vec<T, Size> v(*this);
+        Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] *= other.data[i];
         }
@@ -34,7 +38,7 @@ class Vec {
     }
 
     __device__ Vec operator-(const Vec& other) const {
-        Vec<T, Size> v(*this);
+        Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] -= other.data[i];
         }
@@ -42,7 +46,7 @@ class Vec {
     }
 
     __device__ Vec operator+(const Vec& other) const {
-        Vec<T, Size> v(*this);
+        Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] += other.data[i];
         }
@@ -50,7 +54,7 @@ class Vec {
     }
 
     __device__ Vec operator-() const {
-        Vec<T, Size> v(*this);
+        Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = -data[i];
         }
@@ -69,7 +73,7 @@ class Vec {
     __device__ const T& operator[](int idx) const { return data[idx]; }
 
     __device__ friend Vec operator*(const float& r, const Vec& other) {
-        Vec<T, Size> v(other);
+        Vec v(other);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = other.data[i] * r;
         }
@@ -111,7 +115,7 @@ class Vec {
 
     __device__ Vec cross(const Vec& other) const {
         assert(Size == 3);  // only valid for 3d space
-        Vec<T, Size> v;
+        Vec v;
         v[X] = data[Y] * other[Z] - data[Z] * other[Y];
         v[Y] = data[Z] * other[X] - data[X] * other[Z];
         v[Z] = data[X] * other[Y] - data[Y] * other[X];

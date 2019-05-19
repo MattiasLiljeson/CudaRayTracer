@@ -77,14 +77,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DebugGUI::getInstance()->init(deviceHandler->getDevice(), wndWidth, wndHeight);
     DebugGUI::getInstance()->setSize("Camera", 200, 1400);
     DebugGUI::getInstance()->setPosition("Camera", 0, 0);
-    DebugGUI::getInstance()->setVisible("Camera", false);
+    //DebugGUI::getInstance()->setVisible("Camera", false);
 
     DebugGUI::getInstance()->setSize("Rays", 200, 1400);
     DebugGUI::getInstance()->setPosition("Rays", 220, 0);
-    DebugGUI::getInstance()->setVisible("Rays", false);
+    //DebugGUI::getInstance()->setVisible("Rays", false);
     DebugGUI::getInstance()->setSize("Mouse", 200, 1400);
     DebugGUI::getInstance()->setPosition("Mouse", 420, 0);
-    DebugGUI::getInstance()->setVisible("Mouse", false);
+    //DebugGUI::getInstance()->setVisible("Mouse", false);
 
     TextureRenderer* texRender = nullptr;
     InputHandler* input = new InputHandler(&hInstance, deviceHandler->getHWnd());

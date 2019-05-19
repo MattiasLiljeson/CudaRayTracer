@@ -10,6 +10,7 @@
 // cuda stuph
 #include <cuda_runtime.h>
 
+#include "Mesh.cuh"
 #include "curand_kernel.h"
 
 #include "tracer.cuh"
@@ -72,9 +73,9 @@ void TextureRenderer::update(float p_dt) {
     camera->pitch((float)-input->getMouse(InputHandler::Y) * 10 * p_dt);
     camera->update();
 
-    Mat44f rotY = Mat44f::rotationY(p_dt*100);
+    Mat44f rotY = Mat44f::rotationY(p_dt * 100);
     // update lights
-    for (int i = 0; i < lights.size();++i) {
+    for (int i = 0; i < lights.size(); ++i) {
         Vec3f tmp = lights[i].position;
         tmp = rotY.multVec(lights[i].position);
         lights[i].position = tmp;
@@ -101,7 +102,7 @@ void TextureRenderer::update(float p_dt) {
 
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
-                float x = 320 * i, y = 240 * j;
+                float x = 320.0f * i, y = 240.0f * j;
                 float ndc_x =
                     (2.0f * (x + 0.5f) / (float)options[0].width - 1.0f) *
                     options[0].imageAspectRatio * options[0].scale;
@@ -336,8 +337,8 @@ void TextureRenderer::initInterop() {
     options[0].fov = 90;
     options[0].backgroundColor = Vec<float, 3>(0.235294f, 0.67451f, 0.843137f);
     options[0].maxDepth = 5;
-    options[0].bias = 0.00001;
-    options[0].scale = tan(deg2rad(options[0].fov * 0.5));
+    options[0].bias = 0.00001f;
+    options[0].scale = tan(deg2rad(options[0].fov * 0.5f));
     options[0].imageAspectRatio = options[0].width / (float)options[0].height;
     options.copyToDevice();
 
@@ -348,7 +349,7 @@ void TextureRenderer::initInterop() {
         Vec3f position(sin(i * radStep) * 5, 0.0f, cos(i * radStep) * 5);
         Vec3f intensity(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
                         rand() / (float)RAND_MAX);
-        lights.pushBack(Light(position, intensity));
+        lights.add(Light(position, intensity));
     }
     lights.copyToDevice();
 
@@ -363,22 +364,39 @@ void TextureRenderer::initInterop() {
             Sphere s = Sphere::sphere(Vec3f(x, -4.0f, z), 1.0f);
             s.object.materialType = Object::DIFFUSE_AND_GLOSSY;
             s.object.diffuseColor = Vec3f(0.1f, 0.1f, 0.1f);
-            spheres.pushBack(s);
+            spheres.add(s);
         }
     }
 
     Sphere mirrorBall = Sphere::sphere(Vec<float, 3>(0.0f, -1.0f, -3.0f), 1.0f);
     mirrorBall.object.materialType = Object::REFLECTION;
     mirrorBall.object.diffuseColor = Vec3f(0.6f, 0.7f, 0.8f);
-    spheres.pushBack(mirrorBall);
+    spheres.add(mirrorBall);
 
     Sphere glassBall = Sphere::sphere(Vec<float, 3>(0.5f, -1.5f, 0.5f), 1.5f);
     glassBall.object.ior = 1.5f;
     glassBall.object.materialType = Object::REFLECTION_AND_REFRACTION;
     glassBall.object.diffuseColor = Vec3f(0.8f, 0.7f, 0.6f);
-    spheres.pushBack(glassBall);
+    spheres.add(glassBall);
 
     spheres.copyToDevice();
+
+    // Vec3f verts[4] = {{-5.0f, -3.0f, -6.0f},
+    //                  {5.0f, -3.0f, -6.0f},
+    //                  {5.0f, -3.0f, -16.0f},
+    //                  {-5.0f, -3.0f, -16.0f}};
+    GlobalCudaVector<Vec3f> vertices(Vec3f(-5.0f, -3.0f, -6.0f),  //
+                                     Vec3f(5.0f, -3.0f, -6.0f),   //
+                                     Vec3f(5.0f, -3.0f, -16.0f),  //
+                                     Vec3f(-5.0f, -3.0f, -16.0f));
+    // int vertIndex[6] = {0, 1, 3, 1, 2, 3};
+    GlobalCudaVector<int> indices(0, 1, 3, 1, 2, 3);
+    // Vec2f st[4] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 1.0f}};
+    GlobalCudaVector<Vec2f> sts(Vec2f(0.0f, 0.0f), Vec2f(1.0f, 0.0f),
+                                Vec2f(1.0f, 1.0f), Vec2f(1.0f, 1.0f));
+    // Mesh* mesh = new Mesh(verts, vertIndex, 2, st);
+    Mesh* mesh = new Mesh(vertices.getDevMem(), indices.getDevMem(), 2, sts.getDevMem());
+    // mesh->materialType = Object::DIFFUSE_AND_GLOSSY;
 }
 
 void TextureRenderer::termInterop() {

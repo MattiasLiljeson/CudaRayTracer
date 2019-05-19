@@ -9,6 +9,12 @@ class GlobalCudaVector {
    public:
     GlobalCudaVector() { cudaMem = nullptr; }
 
+    template <typename... Ts>
+    GlobalCudaVector(Ts... initialData) {
+        cudaMem = nullptr;
+        add(initialData...);
+    }
+
     ~GlobalCudaVector() { freeCudaMem(); }
 
     void copyToDevice() {
@@ -23,8 +29,9 @@ class GlobalCudaVector {
 
     T* getDevMem() {
         if (!copied) {
-            Utils::error(__FILE__, __FUNCTION__, __LINE__,
-                         "Memory not copied to device");
+            //Utils::error(__FILE__, __FUNCTION__, __LINE__,
+            //             "Memory not copied to device");
+            copyToDevice();
         }
         return cudaMem;
     }
@@ -32,13 +39,19 @@ class GlobalCudaVector {
     T& operator[](int idx) { return hostMem[idx]; }
     const T& operator[](int idx) const { return hostMem[idx]; }
 
-    void pushBack(T o) {
+    template <typename... Ts>
+    void add(T first, Ts... rest) {
+        add(first);
+        add(rest...);
+    }
+
+    void add(T o) {
         memChanged = true;
         copied = false;
         hostMem.push_back(o);
     }
 
-    int size() { return hostMem.size(); }
+    int size() { return (int)hostMem.size(); }
 
     auto begin() { return hostMem.begin(); }
     auto end() { return hostMem.end(); }
@@ -61,7 +74,7 @@ class GlobalCudaVector {
         gpuErrchk(cudaMalloc((void**)&cudaMem, byteCnt()));
     }
 
-    int byteCnt() { return sizeof(T) * hostMem.size(); }
+    int byteCnt() { return sizeof(T) * (int)hostMem.size(); }
 
     bool memChanged = true;
     bool copied = false;
