@@ -362,6 +362,10 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="DeviceHandler.h" />
     <ClInclude Include="GlobalCudaArray.h" />
     <ClInclude Include="globals.h" />
+    <None Include="Scene.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <ClInclude Include="InputHandler.h" />
     <ClInclude Include="LayoutFactory.h" />
     <None Include="Light.cuh">

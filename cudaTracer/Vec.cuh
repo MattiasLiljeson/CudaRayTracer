@@ -21,6 +21,8 @@ class Vec {
         }
     }
 
+    __device__ constexpr Vec() {}
+
     __device__ Vec<T, Size> operator*(const float& r) const {
         Vec v(const_cast<Vec const&>(*this));
         for (T& d : v.data) {

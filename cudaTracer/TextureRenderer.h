@@ -33,7 +33,7 @@ class TextureRenderer {
     int m_texHeight;
 
     // cuda
-    GlobalCudaArray<Options, 1> options;
+    Options options;
     GlobalCudaVector<Light> lights;
     GlobalCudaVector<Sphere> spheres;
 

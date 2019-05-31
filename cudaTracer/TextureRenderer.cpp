@@ -13,6 +13,7 @@
 #include "Mesh.cuh"
 #include "curand_kernel.h"
 
+#include "Scene.cuh"
 #include "tracer.cuh"
 
 //=========================================================================
@@ -104,11 +105,11 @@ void TextureRenderer::update(float p_dt) {
             for (int j = 0; j < 3; ++j) {
                 float x = 320.0f * i, y = 240.0f * j;
                 float ndc_x =
-                    (2.0f * (x + 0.5f) / (float)options[0].width - 1.0f) *
-                    options[0].imageAspectRatio * options[0].scale;
+                    (2.0f * (x + 0.5f) / (float)options.width - 1.0f) *
+                    options.imageAspectRatio * options.scale;
                 float ndc_y =
-                    (1.0f - 2.0f * (y + 0.5f) / (float)options[0].height) *
-                    options[0].scale;
+                    (1.0f - 2.0f * (y + 0.5f) / (float)options.height) *
+                    options.scale;
                 if (!added) {
                     // TODO: debug
                     sprintf_s(buffer, "ray %d %d", i, j);
@@ -130,12 +131,16 @@ void TextureRenderer::update(float p_dt) {
         // cudaLinearMemory as an argument to allow the kernel to
         // write to it
 
-        cudamain(options.getDevMem(), lights.getDevMem(), lights.size(),
-                 spheres.getDevMem(), spheres.size(),
-                 m_textureSet.cudaLinearMemory, options[0].width,
-                 options[0].height, m_textureSet.pitch,
-                 // Vec3f(0.0f,0.0f,0.0f),
-                 camera->getPosition(), camera->getCamera());
+        Scene scene;
+        scene.lights = lights.getDevMem();
+        scene.lightCnt = lights.size();
+        scene.spheres = spheres.getDevMem();
+        scene.sphereCnt = spheres.size();
+        scene.orig = camera->getPosition();
+        scene.camera = camera->getCamera().inversed();
+
+        cudamain(options, scene, m_textureSet.cudaLinearMemory,
+                 m_textureSet.pitch);
         getLastCudaError("cuda_texture_2d failed");
 
         cudaArray* cuArray;
@@ -148,7 +153,7 @@ void TextureRenderer::update(float p_dt) {
                             0, 0,     // offset
                             m_textureSet.cudaLinearMemory,
                             m_textureSet.pitch,  // src
-                            m_textureSet.width * 4 * sizeof(float),
+                            m_textureSet.width * (int)4 * sizeof(float),
                             m_textureSet.height,        // extent
                             cudaMemcpyDeviceToDevice);  // kind
         getLastCudaError("cudaMemcpy2DToArray failed");
@@ -332,15 +337,14 @@ void TextureRenderer::initInterop() {
     gpuErrchk(cudaDeviceGetLimit(&stacksize, cudaLimitStackSize));
     gpuErrchk(cudaDeviceSetLimit(cudaLimitStackSize, 8096));
 
-    options[0].width = m_textureSet.width;
-    options[0].height = m_textureSet.height;
-    options[0].fov = 90;
-    options[0].backgroundColor = Vec<float, 3>(0.235294f, 0.67451f, 0.843137f);
-    options[0].maxDepth = 5;
-    options[0].bias = 0.00001f;
-    options[0].scale = tan(deg2rad(options[0].fov * 0.5f));
-    options[0].imageAspectRatio = options[0].width / (float)options[0].height;
-    options.copyToDevice();
+    options.width = m_textureSet.width;
+    options.height = m_textureSet.height;
+    options.fov = 90;
+    options.backgroundColor = Vec<float, 3>(0.235294f, 0.67451f, 0.843137f);
+    options.maxDepth = 5;
+    options.bias = 0.00001f;
+    options.scale = tan(deg2rad(options.fov * 0.5f));
+    options.imageAspectRatio = options.width / (float)options.height;
 
     const int numLights = 10;
     const float radStep = (2 * PI) / numLights;
@@ -381,22 +385,20 @@ void TextureRenderer::initInterop() {
 
     spheres.copyToDevice();
 
-    // Vec3f verts[4] = {{-5.0f, -3.0f, -6.0f},
-    //                  {5.0f, -3.0f, -6.0f},
-    //                  {5.0f, -3.0f, -16.0f},
-    //                  {-5.0f, -3.0f, -16.0f}};
-    GlobalCudaVector<Vec3f> vertices(Vec3f(-5.0f, -3.0f, -6.0f),  //
-                                     Vec3f(5.0f, -3.0f, -6.0f),   //
-                                     Vec3f(5.0f, -3.0f, -16.0f),  //
-                                     Vec3f(-5.0f, -3.0f, -16.0f));
-    // int vertIndex[6] = {0, 1, 3, 1, 2, 3};
-    GlobalCudaVector<int> indices(0, 1, 3, 1, 2, 3);
-    // Vec2f st[4] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 1.0f}};
-    GlobalCudaVector<Vec2f> sts(Vec2f(0.0f, 0.0f), Vec2f(1.0f, 0.0f),
-                                Vec2f(1.0f, 1.0f), Vec2f(1.0f, 1.0f));
-    // Mesh* mesh = new Mesh(verts, vertIndex, 2, st);
-    Mesh* mesh = new Mesh(vertices.getDevMem(), indices.getDevMem(), 2, sts.getDevMem());
-    // mesh->materialType = Object::DIFFUSE_AND_GLOSSY;
+    // TODO: fix memory leaks! Delete these pointers!
+    GlobalCudaVector<Vec3f>* vertices =
+        new GlobalCudaVector<Vec3f>(Vec3f(-5.0f, -3.0f, -6.0f),  //
+                                    Vec3f(5.0f, -3.0f, -6.0f),   //
+                                    Vec3f(5.0f, -3.0f, -16.0f),  //
+                                    Vec3f(-5.0f, -3.0f, -16.0f));
+    GlobalCudaVector<int>* indices =
+        new GlobalCudaVector<int>(0, 1, 3, 1, 2, 3);
+    GlobalCudaVector<Vec2f>* sts =
+        new GlobalCudaVector<Vec2f>(Vec2f(0.0f, 0.0f), Vec2f(1.0f, 0.0f),
+                                    Vec2f(1.0f, 1.0f), Vec2f(1.0f, 1.0f));
+    Mesh* mesh = new Mesh(vertices->getDevMem(), indices->getDevMem(), 2,
+                          sts->getDevMem());
+    mesh->materialType = Object::DIFFUSE_AND_GLOSSY;
 }
 
 void TextureRenderer::termInterop() {

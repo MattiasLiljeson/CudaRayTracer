@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MAT_CUH
+#define MAT_CUH
 
 #include "Vec.cuh"
 #include "globals.h"
@@ -6,7 +7,7 @@
 template <typename T>
 class Mat44 {
    public:
-    T x[4][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+    T x[4][4];
 
     __device__ __host__ constexpr Mat44() {}
 
@@ -60,7 +61,8 @@ class Mat44 {
         return tmp;
     }
 
-    __device__ __host__ friend bool operator==(const Mat44 &lhs, const Mat44 &rhs) { 
+    __device__ __host__ friend bool operator==(const Mat44 &lhs,
+                                               const Mat44 &rhs) {
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
                 if (lhs[i][j] != rhs[i][j]) {
@@ -71,7 +73,8 @@ class Mat44 {
         return true;
     }
 
-    __device__ __host__ friend bool operator!=(const Mat44 &lhs, const Mat44 &rhs) {
+    __device__ __host__ friend bool operator!=(const Mat44 &lhs,
+                                               const Mat44 &rhs) {
         return !(lhs == rhs);
     }
 
@@ -165,7 +168,7 @@ class Mat44 {
     //[/comment]
     __device__ __host__ Mat44 inversed() const {
         int i, j, k;
-        Mat44 s;
+        Mat44 s = identity();
         Mat44 t(*this);
 
         // Forward elimination
@@ -189,7 +192,7 @@ class Mat44 {
 
             if (pivotsize == 0) {
                 // Cannot invert singular matrix
-                return Mat44();
+                return identity();
             }
 
             if (pivot != i) {
@@ -222,7 +225,7 @@ class Mat44 {
 
             if ((f = t[i][i]) == 0) {
                 // Cannot invert singular matrix
-                return Mat44();
+                return identity();
             }
 
             for (j = 0; j < 4; j++) {
@@ -279,7 +282,26 @@ class Mat44 {
         return s;
     }*/
 
-    __device__ __host__ static Mat44 identity() { return Mat44(); }
+    __device__ __host__ static Mat44 identity() {
+        Mat44 x;
+        x[0][0] = 1;
+        x[0][1] = 0;
+        x[0][2] = 0;
+        x[0][3] = 0;
+        x[1][0] = 0;
+        x[1][1] = 1;
+        x[1][2] = 0;
+        x[1][3] = 0;
+        x[2][0] = 0;
+        x[2][1] = 0;
+        x[2][2] = 1;
+        x[2][3] = 0;
+        x[3][0] = 0;
+        x[3][1] = 0;
+        x[3][2] = 0;
+        x[3][3] = 1;
+        return x;
+    }
 
     __device__ __host__ static Mat44 rotation(const Vec3f &axis,
                                               const float &angle) {
@@ -373,3 +395,5 @@ class Mat44 {
 };
 
 typedef Mat44<float> Mat44f;
+
+#endif
