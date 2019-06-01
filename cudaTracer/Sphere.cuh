@@ -1,18 +1,19 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "Vec.cuh"
 #include "Object.cuh"
+#include "Vec.cuh"
 
 inline __device__ bool solveQuadratic(const float &a, const float &b,
                                       const float &c, float &x0, float &x1) {
     float discr = b * b - 4 * a * c;
-    if (discr < 0)
+    if (discr < 0) {
         return false;
-    else if (discr == 0)
+    } else if (discr == 0) {
         x0 = x1 = -0.5f * b / a;
-    else {
-        float q = (b > 0) ? -0.5f * (b + sqrt(discr)) : -0.5f * (b - sqrt(discr));
+    } else {
+        float q =
+            (b > 0) ? -0.5f * (b + sqrt(discr)) : -0.5f * (b - sqrt(discr));
         x0 = q / a;
         x1 = c / q;
     }
@@ -25,20 +26,20 @@ inline __device__ bool solveQuadratic(const float &a, const float &b,
 }
 
 struct Sphere {
-    Object object;
     Vec3f center;
     float radius, radius2;
 
-    __host__ __device__ static Sphere sphere(const Vec3f &c, const float &r) {
-        Sphere s;
-        Object::init(&s.object);
-        s.center = c;
-        s.radius = r;
-        s.radius2 = r * r;
-        return s;
+    __host__ __device__ Sphere() {}
+
+    __host__ __device__ Sphere(const Vec3f &c, const float &r) {
+        //Sphere s;
+        center = c;
+        radius = r;
+        radius2 = r * r;
+        //return s;
     }
     __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
-                              uint32_t &index, Vec2f &uv) const {
+                              int &index, Vec2f &uv) const {
         // analytic solution
         Vec3f L = orig - center;
         float a = dir.dot(dir);

@@ -134,8 +134,8 @@ void TextureRenderer::update(float p_dt) {
         Scene scene;
         scene.lights = lights.getDevMem();
         scene.lightCnt = lights.size();
-        scene.spheres = spheres.getDevMem();
-        scene.sphereCnt = spheres.size();
+        scene.shapes = shapes.getDevMem();
+        scene.shapeCnt = shapes.size();
         scene.orig = camera->getPosition();
         scene.camera = camera->getCamera().inversed();
 
@@ -358,47 +358,48 @@ void TextureRenderer::initInterop() {
     lights.copyToDevice();
 
     const int sphereCntSqrt = 5;
+    float scale = 1.0f / sphereCntSqrt;
     for (int i = 0; i < sphereCntSqrt; ++i) {
         for (int j = 0; j < sphereCntSqrt; ++j) {
-            int idx = i * sphereCntSqrt + j;
+            //int idx = i * sphereCntSqrt + j;
             // std::cerr << idx << std::endl;
-            float scale = 1.0f / sphereCntSqrt;
             float x = -sphereCntSqrt + i * 2.0f;
             float z = -sphereCntSqrt + j * 2.0f;
-            Sphere s = Sphere::sphere(Vec3f(x, -4.0f, z), 1.0f);
-            s.object.materialType = Object::DIFFUSE_AND_GLOSSY;
-            s.object.diffuseColor = Vec3f(0.1f, 0.1f, 0.1f);
-            spheres.add(s);
+            Shape s = Shape(Sphere(Vec3f(x, -4.0f, z), 1.0f));
+            s.material.materialType = Object::DIFFUSE_AND_GLOSSY;
+            s.material.diffuseColor = Vec3f(x*scale, 0.1f, z*scale);
+            shapes.add(s);
         }
     }
 
-    Sphere mirrorBall = Sphere::sphere(Vec<float, 3>(0.0f, -1.0f, -3.0f), 1.0f);
-    mirrorBall.object.materialType = Object::REFLECTION;
-    mirrorBall.object.diffuseColor = Vec3f(0.6f, 0.7f, 0.8f);
-    spheres.add(mirrorBall);
+    Shape mirrorBall = Shape(Sphere(Vec3f(0.0f, -1.0f, -3.0f), 1.0f));
+    mirrorBall.material.materialType = Object::REFLECTION;
+    mirrorBall.material.diffuseColor = Vec3f(0.6f, 0.7f, 0.8f);
+    shapes.add(mirrorBall);
 
-    Sphere glassBall = Sphere::sphere(Vec<float, 3>(0.5f, -1.5f, 0.5f), 1.5f);
-    glassBall.object.ior = 1.5f;
-    glassBall.object.materialType = Object::REFLECTION_AND_REFRACTION;
-    glassBall.object.diffuseColor = Vec3f(0.8f, 0.7f, 0.6f);
-    spheres.add(glassBall);
-
-    spheres.copyToDevice();
+    Shape glassBall = Shape(Sphere(Vec3f(0.5f, -1.5f, 0.5f), 1.5f));
+    glassBall.material.ior = 1.5f;
+    glassBall.material.materialType = Object::REFLECTION_AND_REFRACTION;
+    glassBall.material.diffuseColor = Vec3f(0.8f, 0.7f, 0.6f);
+    shapes.add(glassBall);
 
     // TODO: fix memory leaks! Delete these pointers!
     GlobalCudaVector<Vec3f>* vertices =
-        new GlobalCudaVector<Vec3f>(Vec3f(-5.0f, -3.0f, -6.0f),  //
-                                    Vec3f(5.0f, -3.0f, -6.0f),   //
-                                    Vec3f(5.0f, -3.0f, -16.0f),  //
-                                    Vec3f(-5.0f, -3.0f, -16.0f));
+        new GlobalCudaVector<Vec3f>(Vec3f(-25.0f, -10.0f, 25.0f),  //
+                                    Vec3f(25.0f, -10.0f, 25.0f),   //
+                                    Vec3f(25.0f, -10.0f, -25.0f),  //
+                                    Vec3f(-25.0f, -10.0f, -25.0f));
     GlobalCudaVector<int>* indices =
         new GlobalCudaVector<int>(0, 1, 3, 1, 2, 3);
     GlobalCudaVector<Vec2f>* sts =
         new GlobalCudaVector<Vec2f>(Vec2f(0.0f, 0.0f), Vec2f(1.0f, 0.0f),
                                     Vec2f(1.0f, 1.0f), Vec2f(1.0f, 1.0f));
-    Mesh* mesh = new Mesh(vertices->getDevMem(), indices->getDevMem(), 2,
-                          sts->getDevMem());
-    mesh->materialType = Object::DIFFUSE_AND_GLOSSY;
+    Shape mesh = Shape(Mesh(vertices->getDevMem(), indices->getDevMem(), 2,
+                          sts->getDevMem()));
+    mesh.material.materialType = Object::DIFFUSE_AND_GLOSSY;
+    shapes.add(mesh);
+
+    shapes.copyToDevice();
 }
 
 void TextureRenderer::termInterop() {

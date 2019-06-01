@@ -97,35 +97,36 @@ __device__ Vec3f refract(const Vec3f &I, const Vec3f &N, const float &ior) {
 }
 
 bool Trace::trace(const Vec3f &orig, const Vec3f &dir, float &tNear,
-                  uint32_t &index, Vec2f &uv, const Sphere **hitObject) {
-    *hitObject = nullptr;
-    for (uint32_t k = 0; k < g_scene.sphereCnt; ++k) {
+                  uint32_t &index, Vec2f &uv, const Shape **hit) {
+    *hit = nullptr;
+    for (int k = 0; k < g_scene.shapeCnt; ++k) {
         float tNearK = INF;
-        uint32_t indexK;
+        int indexK;
         Vec2f uvK;
-        if (g_scene.spheres[k].intersect(orig, dir, tNearK, indexK, uvK) &&
-            tNearK < tNear) {
-            *hitObject = &g_scene.spheres[k];
+        bool intersected =
+            g_scene.shapes[k].intersect(orig, dir, tNearK, indexK, uvK);
+        if (intersected && tNearK < tNear) {
+            *hit = &g_scene.shapes[k];
             tNear = tNearK;
             index = indexK;
             uv = uvK;
         }
     }
 
-    return (*hitObject != nullptr);
+    return (*hit != nullptr);
 }
 
 Trace::Trace(unsigned char *surface) : surface(surface) {}
 
 Vec3f Trace::reflectionAndRefraction(const Vec3f &dir, uint32_t &index,
                                      Vec2f &uv, Vec2f &st,
-                                     const Sphere *hitObject,
+                                     const Shape *hitObject,
                                      const Vec3f &hitPoint, const Vec3f &N,
                                      const int depth) {
+    const Object* object = hitObject->getObject();
     Vec3f hitColor = g_options.backgroundColor;
     Vec3f reflectionDirection = N.reflect(dir).normalized();
-    Vec3f refractionDirection =
-        refract(dir, N, hitObject->object.ior).normalized();
+    Vec3f refractionDirection = refract(dir, N, object->ior).normalized();
     Vec3f reflectionRayOrig = (reflectionDirection.dot(N) < 0)
                                   ? hitPoint - N * g_options.bias
                                   : hitPoint + N * g_options.bias;
@@ -137,13 +138,13 @@ Vec3f Trace::reflectionAndRefraction(const Vec3f &dir, uint32_t &index,
     Vec3f refractionColor =
         castRay(refractionRayOrig, refractionDirection, depth + 1);
     float kr;
-    fresnel(dir, N, hitObject->object.ior, kr);
+    fresnel(dir, N, object->ior, kr);
     hitColor = reflectionColor * kr + refractionColor * (1 - kr);
     return hitColor;
 }
 
 Vec3f Trace::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv, Vec2f &st,
-                        const Sphere *hitObject, const Vec3f &hitPoint,
+                        const Shape *hitObject, const Vec3f &hitPoint,
                         const Vec3f &N, const int depth) {
     Vec3f hitColor = g_options.backgroundColor;
     float kr = 0.5f;
@@ -159,9 +160,11 @@ Vec3f Trace::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv, Vec2f &st,
 }
 
 Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
-                              Vec2f &st, const Sphere *hitObject,
+                              Vec2f &st, const Shape *hitObject,
                               const Vec3f &hitPoint, const Vec3f &N,
                               const int depth) {
+    const Object* object = hitObject->getObject();
+
     Vec3f hitColor = g_options.backgroundColor;
     // [comment]
     // We use the Phong illumation model int the default case. The
@@ -183,7 +186,7 @@ Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
         float lightDistance2 = lightDir.dot(lightDir);
         lightDir = lightDir.normalized();
         float LdotN = fmaxf(0.f, lightDir.dot(N));
-        Sphere *shadowHitObject = nullptr;
+        Shape *shadowHitObject = nullptr;
         float tNearShadow = INF;
         // is the point in shadow, and is the nearest occluding
         // object closer to the object than the light itself?
@@ -193,12 +196,15 @@ Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
         lightAmt += g_scene.lights[i].intensity * LdotN * (1 - inShadow);
         Vec3f reflectionDirection = (-lightDir).reflect(N);
         float dotp = fmaxf(0.f, -reflectionDirection.dot(dir));
-        specularColor += powf(dotp, hitObject->object.specularExponent) *
-                         g_scene.lights[i].intensity;
+
+        specularColor +=
+            powf(dotp, object->specularExponent) * g_scene.lights[i].intensity;
     }
-    hitColor = lightAmt * hitObject->object.evalDiffuseColor(st) *
-               hitObject->object.Kd;
-    hitColor += specularColor * hitObject->object.Ks;
+
+    Vec3f diffuse = hitObject->evalDiffuseColor(st);
+
+    hitColor = lightAmt * diffuse * object->Kd;
+    //hitColor = specularColor * object->Kd;
     return hitColor;
 }
 
@@ -210,13 +216,17 @@ Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
     float tnear = INF;
     Vec2f uv;
     uint32_t index = 0;
-    Sphere *hitObject = nullptr;
+    Shape *hitObject = nullptr;
     if (trace(orig, dir, tnear, index, uv, &hitObject)) {
         Vec3f hitPoint = orig + dir * tnear;
         Vec3f N;   // normal
         Vec2f st;  // st coordinates
+
+        // hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
         hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
-        switch (hitObject->object.materialType) {
+
+        Object::MaterialType material = hitObject->getObject()->materialType;
+        switch (material) {
             case Object::REFLECTION_AND_REFRACTION:
                 return reflectionAndRefraction(dir, index, uv, st, hitObject,
                                                hitPoint, N, depth);
@@ -224,9 +234,10 @@ Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
                 return reflection(dir, index, uv, st, hitObject, hitPoint, N,
                                   depth);
             case Object::DIFFUSE_AND_GLOSSY:
-            default:
                 return diffuseAndGlossy(dir, index, uv, st, hitObject, hitPoint,
                                         N, depth);
+            default:
+                return Vec3f(1.0f, 0.5f, 0.25f);
         }
     }
 
@@ -267,7 +278,7 @@ __global__ void kernel(unsigned char *surface) {
     // pixel[ALPHA] = 1.0f;
 }
 
-void cudamain(const Options& options, const Scene &scene, const void *surface,
+void cudamain(const Options &options, const Scene &scene, const void *surface,
               size_t pitch) {
     gpuErrchk(cudaMemcpyToSymbol(C_PITCH, &pitch, sizeof(size_t)));
 

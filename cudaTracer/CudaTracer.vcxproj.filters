@@ -99,9 +99,6 @@
     <ClInclude Include="Mesh.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.cuh">
-      <Filter>Cuda kernels\Utils</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -188,5 +185,6 @@
     <None Include="Sphere.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
+    <None Include="Scene.cuh" />
   </ItemGroup>
 </Project>

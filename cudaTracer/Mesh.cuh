@@ -7,9 +7,10 @@
 
 using namespace axis;
 
-bool rayTriangleIntersect(const Vec3f &v0, const Vec3f &v1, const Vec3f &v2,
-                          const Vec3f &orig, const Vec3f &dir, float &tnear,
-                          float &u, float &v) {
+inline __device__ bool rayTriangleIntersect(const Vec3f &v0, const Vec3f &v1,
+                                            const Vec3f &v2, const Vec3f &orig,
+                                            const Vec3f &dir, float &tnear,
+                                            float &u, float &v) {
     Vec3f edge1 = v1 - v0;
     Vec3f edge2 = v2 - v0;
     Vec3f pvec = dir.cross(edge2);
@@ -33,50 +34,26 @@ bool rayTriangleIntersect(const Vec3f &v0, const Vec3f &v1, const Vec3f &v2,
     return true;
 }
 
-Vec3f mix(const Vec3f &a, const Vec3f &b, const float &mixValue) {
+inline __device__ Vec3f mix(const Vec3f &a, const Vec3f &b,
+                            const float &mixValue) {
     return a * (1 - mixValue) + b * mixValue;
 }
 
-class Mesh : public Object {
+class Mesh {
    public:
     int triangleCnt;
     Vec3f *vertices;
     int *vertexIndex;
     Vec2f *stCoordinates;
 
-    __host__ Mesh(Vec3f *vertices, int *vertexIndex,
-                  int triangleCnt, Vec2f *st) {
+    __host__ __device__ Mesh() {}
+
+    __host__ __device__ Mesh(Vec3f *vertices, int *vertexIndex, int triangleCnt,
+                             Vec2f *st) {
         this->vertices = vertices;
         this->vertexIndex = vertexIndex;
         this->triangleCnt = triangleCnt;
         this->stCoordinates = st;
-
-        //int maxIndex = 0;
-        //for (int i = 0; i < triangleCnt * 3; ++i) {
-        //    if (vertexIndex[i] > maxIndex) maxIndex = vertexIndex[i];
-        //}
-        //maxIndex += 1;
-
-        //this->vertices = new Vec3f[maxIndex];
-        //// memcpy(vertices, verts, sizeof(Vec3f) * maxIndex);
-        //for (int i = 0; i < maxIndex; ++i) {
-        //    this->vertices[i] = vertices[i];
-        //}
-
-        //this->vertexIndex = new int[triangleCnt * 3];
-        //// memcpy(vertexIndex, vertsIndex, sizeof(int) * numTris * 3);
-        //for (int i = 0; i < triangleCnt * 3; ++i) {
-        //    this->vertexIndex[i] = vertexIndex[i];
-        //}
-        //stCoordinates = new Vec2f[maxIndex];
-        // memcpy(stCoordinates, st, sizeof(Vec2f) * maxIndex);
-    }
-
-    __host__ ~Mesh() {
-        //delete[] vertices;
-        //delete[] vertexIndex;
-        //delete[] stCoordinates;
-    }
 
     __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
                               int &index, Vec2f &uv) const {
@@ -117,7 +94,8 @@ class Mesh : public Object {
 
     __device__ Vec3f evalDiffuseColor(const Vec2f &st) const {
         float scale = 5.0f;
-        float pattern = (fmodf(st[X] * scale, 1.0f) > 0.5f) ^ (fmodf(st[Y] * scale, 1.0f) > 0.5f);
+        float pattern = (fmodf(st[X] * scale, 1.0f) > 0.5f) ^
+                        (fmodf(st[Y] * scale, 1.0f) > 0.5f);
         return mix(Vec3f(0.815f, 0.235f, 0.031f), Vec3f(0.937f, 0.937f, 0.231f),
                    pattern);
     }

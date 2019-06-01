@@ -9,6 +9,7 @@
 #include "Light.cuh"
 #include "Options.cuh"
 #include "Sphere.cuh"
+#include "Scene.cuh"
 #include "GlobalCudaArray.h"
 #include "GlobalCudaVector.h"
 #include "InputHandler.h"
@@ -35,7 +36,7 @@ class TextureRenderer {
     // cuda
     Options options;
     GlobalCudaVector<Light> lights;
-    GlobalCudaVector<Sphere> spheres;
+    GlobalCudaVector<Shape> shapes;
 
     // Rasterizer states
     ID3D11RasterizerState* m_rsDefault;    // The default rasterizer state
