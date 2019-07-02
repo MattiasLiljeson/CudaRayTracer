@@ -4,7 +4,7 @@
 #include <cuda_runtime_api.h>
 #include "DeviceHandler.h"
 #include "ShaderSet.h"
-#include "TextureSet.h"
+#include "D3DCudaTextureSet.h"
 
 #include "Light.cuh"
 #include "Options.cuh"
@@ -27,7 +27,7 @@ class TextureRenderer {
     Camera* camera;
 
     ID3D11InputLayout* m_inputLayout;
-    TextureSet m_textureSet;
+    D3DCudaTextureSet m_textureSet;
     ShaderSet* m_shaderSet;
     ID3D11Buffer* m_vertexBuffer;
     int m_texWidth;

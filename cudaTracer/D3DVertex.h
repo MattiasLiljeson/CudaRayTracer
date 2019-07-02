@@ -1,6 +1,6 @@
 #pragma once
 
-struct Vertex
+struct D3DVertex
 {
 	float pos[3];
 	float tex[2];

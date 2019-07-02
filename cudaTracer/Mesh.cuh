@@ -7,59 +7,27 @@
 
 using namespace axis;
 
-inline __device__ bool rayTriangleIntersect(const Vec3f &v0, const Vec3f &v1,
-                                            const Vec3f &v2, const Vec3f &orig,
-                                            const Vec3f &dir, float &tnear,
-                                            float &u, float &v) {
-    Vec3f edge1 = v1 - v0;
-    Vec3f edge2 = v2 - v0;
-    Vec3f pvec = dir.cross(edge2);
-    float det = edge1.dot(pvec);
-    if (det == 0 || det < 0) return false;
-
-    Vec3f tvec = orig - v0;
-    u = tvec.dot(pvec);
-    if (u < 0 || u > det) return false;
-
-    Vec3f qvec = tvec.cross(edge1);
-    v = dir.dot(qvec);
-    if (v < 0 || u + v > det) return false;
-
-    float invDet = 1 / det;
-
-    tnear = edge2.dot(qvec) * invDet;
-    u *= invDet;
-    v *= invDet;
-
-    return true;
-}
-
-inline __device__ Vec3f mix(const Vec3f &a, const Vec3f &b,
-                            const float &mixValue) {
-    return a * (1 - mixValue) + b * mixValue;
-}
-
 class Mesh {
    public:
-    int triangleCnt;
+    int vertexCnt;
     Vec3f *vertices;
     int *vertexIndex;
     Vec2f *stCoordinates;
 
     __host__ __device__ Mesh() {}
 
-    __host__ __device__ Mesh(Vec3f *vertices, int *vertexIndex, int triangleCnt,
+    __host__ __device__ Mesh(Vec3f *vertices, int *vertexIndex, int vertexCnt,
                              Vec2f *st) {
         this->vertices = vertices;
         this->vertexIndex = vertexIndex;
-        this->triangleCnt = triangleCnt;
+        this->vertexCnt = vertexCnt;
         this->stCoordinates = st;
     }
 
     __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
                               int &index, Vec2f &uv) const {
         bool intersect = false;
-        for (int k = 0; k < triangleCnt; ++k) {
+        for (int k = 0; k < vertexCnt; ++k) {
             const Vec3f &v0 = vertices[vertexIndex[k * 3]];
             const Vec3f &v1 = vertices[vertexIndex[k * 3 + 1]];
             const Vec3f &v2 = vertices[vertexIndex[k * 3 + 2]];
@@ -94,11 +62,34 @@ class Mesh {
     }
 
     __device__ Vec3f evalDiffuseColor(const Vec2f &st) const {
-        float scale = 5.0f;
-        float pattern = (fmodf(st[X] * scale, 1.0f) > 0.5f) ^
-                        (fmodf(st[Y] * scale, 1.0f) > 0.5f);
-        return mix(Vec3f(0.815f, 0.235f, 0.031f), Vec3f(0.937f, 0.937f, 0.231f),
-                   pattern);
+        return Vec3f(st[X]/2, st[Y]/2, 0.1f);
+    }
+
+    __device__ bool static rayTriangleIntersect(const Vec3f &v0, const Vec3f &v1,
+                                         const Vec3f &v2, const Vec3f &orig,
+                                         const Vec3f &dir, float &tnear,
+                                         float &u, float &v) {
+        Vec3f edge1 = v1 - v0;
+        Vec3f edge2 = v2 - v0;
+        Vec3f pvec = dir.cross(edge2);
+        float det = edge1.dot(pvec);
+        if (det == 0 || det < 0) return false;
+
+        Vec3f tvec = orig - v0;
+        u = tvec.dot(pvec);
+        if (u < 0 || u > det) return false;
+
+        Vec3f qvec = tvec.cross(edge1);
+        v = dir.dot(qvec);
+        if (v < 0 || u + v > det) return false;
+
+        float invDet = 1 / det;
+
+        tnear = edge2.dot(qvec) * invDet;
+        u *= invDet;
+        v *= invDet;
+
+        return true;
     }
 };
 

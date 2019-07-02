@@ -3,7 +3,7 @@
 #include <d3d11.h>
 
 // Data structure for 2D texture shared between DirectX and CUDA
-struct TextureSet
+struct D3DCudaTextureSet
 {
 	ID3D11Texture2D         *pTexture;
 	ID3D11ShaderResourceView *pSRView;

@@ -1,20 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="DeviceHandler.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderSet.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureRenderer.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DDebugger.cpp">
-      <Filter>Source\Utils</Filter>
     </ClCompile>
     <ClCompile Include="DebugGUI.cpp">
       <Filter>Source\Utils</Filter>
@@ -28,46 +16,34 @@
     <ClCompile Include="Timer.cpp">
       <Filter>Source\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="InputHandler.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceHandler.cpp">
+      <Filter>Source\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderSet.cpp">
+      <Filter>Source\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureRenderer.cpp">
+      <Filter>Source\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="InputHandler.cpp">
+      <Filter>Source\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DDebugger.cpp">
+      <Filter>Source\DirectX</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DeviceHandler.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="globals.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="LayoutFactory.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderSet.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureRenderer.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureSet.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Vertex.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="preProc.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="cudaUtils.h">
-      <Filter>Source\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DDebugger.h">
-      <Filter>Source\Utils</Filter>
     </ClInclude>
     <ClInclude Include="DebugGUI.h">
       <Filter>Source\Utils</Filter>
@@ -84,9 +60,6 @@
     <ClInclude Include="Timer.h">
       <Filter>Source\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="InputHandler.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -95,6 +68,33 @@
     </ClInclude>
     <ClInclude Include="GlobalCudaVector.h">
       <Filter>Source\Cuda utils</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceHandler.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderSet.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="LayoutFactory.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureRenderer.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="cudaUtils.h">
+      <Filter>Source\Cuda utils</Filter>
+    </ClInclude>
+    <ClInclude Include="InputHandler.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DDebugger.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DVertex.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DCudaTextureSet.h">
+      <Filter>Source\DirectX</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +118,9 @@
     </Filter>
     <Filter Include="Cuda kernels\Shapes">
       <UniqueIdentifier>{a6a47d45-48cb-42bb-ac3a-68509861a128}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DirectX">
+      <UniqueIdentifier>{9014a7a6-53e9-468a-8daf-1647acddfc92}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

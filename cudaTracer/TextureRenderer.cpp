@@ -1,6 +1,6 @@
 #include "TextureRenderer.h"
 #include "LayoutFactory.h"
-#include "Vertex.h"
+#include "D3DVertex.h"
 
 // cuda stuph
 #include <cuda_runtime.h>
@@ -167,7 +167,7 @@ void TextureRenderer::draw() {
 
     const int SLOT = 0;
     const int BUFFER_CNT = 1;
-    const unsigned int STRIDE[] = {sizeof(Vertex)};
+    const unsigned int STRIDE[] = {sizeof(D3DVertex)};
     const unsigned int OFFSET[] = {0};
     m_deviceHandler->getContext()->IASetVertexBuffers(
         SLOT, BUFFER_CNT, &m_vertexBuffer, STRIDE, OFFSET);
@@ -236,9 +236,8 @@ void TextureRenderer::initInputLayout() {
 }
 
 void TextureRenderer::initQuad() {
-    Vertex mesh[] = {
+    D3DVertex mesh[] = {
         {{1, -1, 0}, {1, 1}},  {{-1, -1, 0}, {0, 1}}, {{1, 1, 0}, {1, 0}},
-
         {{-1, -1, 0}, {0, 1}}, {{1, 1, 0}, {1, 0}},   {{-1, 1, 0}, {0, 0}}};
 
     D3D11_BUFFER_DESC bd;

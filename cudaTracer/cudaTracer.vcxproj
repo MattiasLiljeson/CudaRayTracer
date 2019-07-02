@@ -381,7 +381,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
     <ClInclude Include="TextureRenderer.h" />
-    <ClInclude Include="TextureSet.h" />
+    <ClInclude Include="D3DCudaTextureSet.h" />
     <ClInclude Include="Timer.h" />
     <CudaCompile Include="tracer.cuh" />
     <ClInclude Include="Utils.h" />
@@ -393,7 +393,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Test|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
-    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="D3DVertex.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
