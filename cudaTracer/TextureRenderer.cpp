@@ -2,11 +2,6 @@
 #include "LayoutFactory.h"
 #include "Vertex.h"
 
-// Kernels
-#include "diamondSquare.cuh"
-#include "gradient.cuh"
-#include "sinGrid.cuh"
-
 // cuda stuph
 #include <cuda_runtime.h>
 

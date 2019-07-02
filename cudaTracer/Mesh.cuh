@@ -54,6 +54,7 @@ class Mesh {
         this->vertexIndex = vertexIndex;
         this->triangleCnt = triangleCnt;
         this->stCoordinates = st;
+    }
 
     __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
                               int &index, Vec2f &uv) const {

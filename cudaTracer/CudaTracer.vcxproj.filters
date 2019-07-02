@@ -96,9 +96,6 @@
     <ClInclude Include="GlobalCudaVector.h">
       <Filter>Source\Cuda utils</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.cuh">
-      <Filter>Cuda kernels\Shapes</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -135,18 +132,6 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu">
-      <Filter>Cuda kernels</Filter>
-    </CudaCompile>
-    <CudaCompile Include="gradient.cu">
-      <Filter>Cuda kernels</Filter>
-    </CudaCompile>
-    <CudaCompile Include="sinGrid.cu">
-      <Filter>Cuda kernels</Filter>
-    </CudaCompile>
-    <CudaCompile Include="diamondSquare.cu">
-      <Filter>Cuda kernels</Filter>
-    </CudaCompile>
     <CudaCompile Include="tracer.cu">
       <Filter>Cuda kernels</Filter>
     </CudaCompile>
@@ -155,18 +140,6 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="kernel.cuh">
-      <Filter>Cuda kernels</Filter>
-    </None>
-    <None Include="sinGrid.cuh">
-      <Filter>Cuda kernels</Filter>
-    </None>
-    <None Include="gradient.cuh">
-      <Filter>Cuda kernels</Filter>
-    </None>
-    <None Include="diamondSquare.cuh">
-      <Filter>Cuda kernels</Filter>
-    </None>
     <None Include="Light.cuh">
       <Filter>Cuda kernels\Utils</Filter>
     </None>
@@ -185,6 +158,11 @@
     <None Include="Sphere.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
-    <None Include="Scene.cuh" />
+    <None Include="Scene.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </None>
+    <None Include="Mesh.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </None>
   </ItemGroup>
 </Project>
