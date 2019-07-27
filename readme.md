@@ -1,12 +1,14 @@
-# Diamond Square CUDA implementation
+# Ray tracing with CUDA
 
-Quite fast and slim diamond square GPGPU implementation, no recursion and minimal branching. 
+Simple parallell gpgpu raytracer written in CUDA.
+The implementation is naive,
+1 pixel = 1 cuda kernel.
+If you are looking for something that is actually good,
+look at Nvidia CUDA Optix or similar ;-).
 Uses DirectX11 for visualization.
 
 ## Example output
-![](examples/R004-129x129.png)
-![](examples/R001-129x129-g.png)
-
+< Nothing yet >
 
 ## Building
 Sorry, no cmake :-/ (yet!).
