@@ -18,7 +18,7 @@ class GlobalCudaArray {
 
     T* getDevMem() {
         if (!copied) {
-            Utils::error(__FILE__, __FUNCTION__, __LINE__,
+            Popup::error(__FILE__, __FUNCTION__, __LINE__,
                          "Memory not copied to device");
         }
         return cudaMem;

@@ -3,8 +3,7 @@
 
 #include <string>
 #include <cassert>
-
-using namespace std;
+#include "Popup.h"
 
 // Object naming:
 #if defined(DEBUG) | defined(_DEBUG)
@@ -15,7 +14,7 @@ using namespace std;
 #define SET_D3D_OBJECT_NAME( resource, name ) ;
 #endif
 
-template< UINT TNameLength >
+template< int TNameLength >
 inline void SetD3dObjectName( 
 _In_ ID3D11DeviceChild* p_resource, 
 _In_z_ const char ( &name )[ TNameLength ] ) {
@@ -34,7 +33,7 @@ _In_z_ const char ( &name )[ TNameLength ] ) {
 		HRESULT hr = (x);                                      \
 		if(FAILED(hr))                                         \
 		{                                                      \
-			Utils::error(__FILE__, __FUNCTION__, __LINE__, "HR error" );\
+			Popup::error(__FILE__, __FUNCTION__, __LINE__, "HR error" );\
 		}                                                      \
 	}
 	#endif
@@ -52,42 +51,6 @@ _In_z_ const char ( &name )[ TNameLength ] ) {
 		x->Release();											\
 		(x) = NULL; 											\
 	}
-
-class Utils
-{
-public:
-	static void wstringFromString(std::wstring &ws, const std::string &s)
-	{
-		std::wstring wsTmp(s.begin(), s.end());
-		ws = wsTmp;
-	}
-
-	static void stringFromWstring(const std::wstring &ws, std::string &s)
-	{
-		std::string sTmp(ws.begin(), ws.end());
-		s = sTmp;
-	}
-
-	static void error( const string& p_file, const string& p_function,
-		int p_line, const string& p_info ){
-		char msg[256];
-		sprintf( msg, "%s @ %s:%d, ERROR: %s", p_function.c_str(),
-			p_file.c_str(), p_line, p_info.c_str() );
-		wstring msgAsW = L"";
-		Utils::wstringFromString( msgAsW, msg );
-
-		MessageBox(NULL, msgAsW.c_str(), L"Error", MB_OK | MB_ICONEXCLAMATION);
-	}
-
-	static void error( const string& p_info ){
-			char msg[256];
-			sprintf( msg, "ERROR: %s", p_info.c_str() );
-			wstring msgAsW = L"";
-			Utils::wstringFromString( msgAsW, msg );
-
-			MessageBox(NULL, msgAsW.c_str(), L"Error", MB_OK | MB_ICONEXCLAMATION);
-	}
-};
 
 struct IdxOutOfRange : std::exception {
 	const char* what() const throw() {return "Index out of range\n";}

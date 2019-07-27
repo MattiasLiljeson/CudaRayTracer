@@ -7,6 +7,14 @@
 template <typename T>
 class GlobalCudaVector {
    public:
+       //TODO: newing stuff like this is ugly...
+    static GlobalCudaVector* fromVector(std::vector<T> vec) {
+        GlobalCudaVector* gcv = new GlobalCudaVector;
+        for (const auto& e : vec) {
+            gcv->add(e);
+        }
+        return gcv;
+    }
     GlobalCudaVector() { cudaMem = nullptr; }
 
     template <typename... Ts>
@@ -29,7 +37,7 @@ class GlobalCudaVector {
 
     T* getDevMem() {
         if (!copied) {
-            //Utils::error(__FILE__, __FUNCTION__, __LINE__,
+            // Popup::error(__FILE__, __FUNCTION__, __LINE__,
             //             "Memory not copied to device");
             copyToDevice();
         }
@@ -64,11 +72,11 @@ class GlobalCudaVector {
     }
 
     void allocateOnDevice() {
-        #ifdef _DEBUG
+#ifdef _DEBUG
         std::cerr << "Allocating CUDA mem for " << size() << " '"
                   << typeid(T).name() << "' (" << sizeof(T) << "). Totally "
                   << byteCnt() << " bytes" << std::endl;
-        #endif
+#endif
 
         freeCudaMem();
         gpuErrchk(cudaMalloc((void**)&cudaMem, byteCnt()));

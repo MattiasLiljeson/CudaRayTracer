@@ -18,24 +18,13 @@
 #include <lodepng.h>
 #include "Camera.h"
 
+#include "Popup.h"
+#include "RayTracer.h"
+
 // 2^n + 1. For diamond square algorithm
-
-// Possible resolutions
-//#define PIC_WIDTH 4097
-//#define PIC_HEIGHT 4097
-
-//#define PIC_WIDTH 2049
-//#define PIC_HEIGHT 2049
-
-//#define PIC_WIDTH 1025
-//#define PIC_HEIGHT 1025
-
-//#define PIC_WIDTH 513
-//#define PIC_HEIGHT 513
 
 #define PIC_WIDTH 640
 #define PIC_HEIGHT 480
-//#define PIC_HEIGHT 1440
 
 void doView(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
             int nCmdShow);
@@ -60,10 +49,6 @@ void dumpPicToDisk(TextureRenderer* texRender) {
     unsigned error = lodepng::encode(buf, img, PIC_WIDTH, PIC_HEIGHT);
 }
 
-void update() {
-
-}
-
 #ifndef _TEST
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow) {
@@ -74,27 +59,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DeviceHandler* deviceHandler =
         new DeviceHandler(hInstance, wndWidth, wndHeight);
     D3DDebugger d3dDbg(deviceHandler->getDevice());
-    DebugGUI::getInstance()->init(deviceHandler->getDevice(), wndWidth, wndHeight);
+    DebugGUI::getInstance()->init(deviceHandler->getDevice(), wndWidth,
+                                  wndHeight);
     DebugGUI::getInstance()->setSize("Camera", 200, 1400);
     DebugGUI::getInstance()->setPosition("Camera", 0, 0);
-    //DebugGUI::getInstance()->setVisible("Camera", false);
+    // DebugGUI::getInstance()->setVisible("Camera", false);
 
     DebugGUI::getInstance()->setSize("Rays", 200, 1400);
     DebugGUI::getInstance()->setPosition("Rays", 220, 0);
-    //DebugGUI::getInstance()->setVisible("Rays", false);
+    // DebugGUI::getInstance()->setVisible("Rays", false);
     DebugGUI::getInstance()->setSize("Mouse", 200, 1400);
     DebugGUI::getInstance()->setPosition("Mouse", 420, 0);
-    //DebugGUI::getInstance()->setVisible("Mouse", false);
+    // DebugGUI::getInstance()->setVisible("Mouse", false);
 
     TextureRenderer* texRender = nullptr;
-    InputHandler* input = new InputHandler(&hInstance, deviceHandler->getHWnd());
+    InputHandler* input =
+        new InputHandler(&hInstance, deviceHandler->getHWnd());
     Camera* camera = new Camera();
 
     try {
-        texRender = new TextureRenderer(deviceHandler, PIC_WIDTH, PIC_HEIGHT, input, camera );
+        texRender = new TextureRenderer(deviceHandler, PIC_WIDTH, PIC_HEIGHT);
     } catch (thrust::system_error e) {
-        Utils::error(e.what());
+        Popup::error(e.what());
     }
+
+    RayTracer tracer(texRender->getTextureSet(), PIC_WIDTH, PIC_HEIGHT, input,
+                     camera);
+    tracer.initScene();
 
     if (texRender) {
         Timer timer;
@@ -105,17 +96,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             } else {
-                update();
                 deviceHandler->beginDrawing();
                 try {
-                        timer.tick();
-                        texRender->update(timer.getDt());
-                     if (DeviceHandler::g_returnPressed) {
+                    timer.tick();
+                    tracer.update(timer.getDt());
+                    texRender->update(timer.getDt());
+                    if (DeviceHandler::g_returnPressed) {
                         dumpPicToDisk(texRender);
                     }
                     texRender->draw();
                 } catch (thrust::system_error e) {
-                    Utils::error(e.what());
+                    Popup::error(e.what());
                 }
 
                 DebugGUI::getInstance()->draw();
@@ -132,9 +123,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 #else
 
 #define CATCH_CONFIG_RUNNER
-//#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#include "../Catch2/single_include/catch2/catch.hpp"
+//#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
+//this in one cpp file
 #include <iostream>
+#include "../Catch2/single_include/catch2/catch.hpp"
 int main(int argc, char** argv) {
     // If the last argument is "-p", then pause after the tests are run.
     // This allows us to run "leaks" on Mac OS X to check for memory leaks.

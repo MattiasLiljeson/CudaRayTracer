@@ -1,4 +1,5 @@
 #include "DebugGUI.h"
+#include "Popup.h"
 
 //=========================================================================
 // Private functions
@@ -63,10 +64,10 @@ DebugGUI* DebugGUI::getInstance() {
 
 void DebugGUI::init(ID3D11Device* p_device, int p_wndWidth, int p_wndHeight) {
     if (!TwInit(TW_DIRECT3D11, p_device)) {
-        Utils::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
+        Popup::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
     }
     if (!TwWindowSize(p_wndWidth, p_wndHeight)) {
-        Utils::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
+        Popup::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
     }
 }
 
@@ -121,7 +122,7 @@ void DebugGUI::setVisible(string p_barName, bool visible) {
 void DebugGUI::draw() {
     //#ifdef USE_DEBUG_GUI
     if (!TwDraw()) {
-        Utils::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
+        Popup::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
     }
     //#endif
 }

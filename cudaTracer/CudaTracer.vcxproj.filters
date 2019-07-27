@@ -37,6 +37,13 @@
     <ClCompile Include="D3DDebugger.cpp">
       <Filter>Source\DirectX</Filter>
     </ClCompile>
+    <ClCompile Include="ObjFileReader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h">
@@ -96,6 +103,16 @@
     <ClInclude Include="D3DCudaTextureSet.h">
       <Filter>Source\DirectX</Filter>
     </ClInclude>
+    <ClInclude Include="ObjFileReader.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Popup.h">
+      <Filter>Source\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="RayTracer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -165,6 +182,9 @@
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
     <None Include="Mesh.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </None>
+    <None Include="Vertex.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
   </ItemGroup>

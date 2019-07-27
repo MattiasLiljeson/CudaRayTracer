@@ -2,20 +2,12 @@
 
 #include <cuda_d3d11_interop.h>
 #include <cuda_runtime_api.h>
+#include "D3DCudaTextureSet.h"
 #include "DeviceHandler.h"
 #include "ShaderSet.h"
-#include "D3DCudaTextureSet.h"
 
-#include "Light.cuh"
-#include "Options.cuh"
-#include "Sphere.cuh"
-#include "Scene.cuh"
-#include "GlobalCudaArray.h"
-#include "GlobalCudaVector.h"
-#include "InputHandler.h"
 #include "Camera.h"
-
-
+#include "InputHandler.h"
 
 // Forward declarations
 class DeviceHandler;
@@ -23,8 +15,6 @@ class DeviceHandler;
 class TextureRenderer {
    private:
     DeviceHandler* m_deviceHandler;
-    InputHandler* input;
-    Camera* camera;
 
     ID3D11InputLayout* m_inputLayout;
     D3DCudaTextureSet m_textureSet;
@@ -32,11 +22,6 @@ class TextureRenderer {
     ID3D11Buffer* m_vertexBuffer;
     int m_texWidth;
     int m_texHeight;
-
-    // cuda
-    Options options;
-    GlobalCudaVector<Light> lights;
-    GlobalCudaVector<Shape> shapes;
 
     // Rasterizer states
     ID3D11RasterizerState* m_rsDefault;    // The default rasterizer state
@@ -46,12 +31,14 @@ class TextureRenderer {
 
    public:
     TextureRenderer(DeviceHandler* p_deviceHandler, int p_texWidth,
-                    int p_texHeight, InputHandler* p_input, Camera* camera);
+                    int p_texHeight);
     ~TextureRenderer();
 
     void update(float p_dt);
     void draw();
     void copyToHostArray(float* out_dest);
+    D3DCudaTextureSet* getTextureSet() { return &m_textureSet;
+    }
 
    private:
     void initTexture();

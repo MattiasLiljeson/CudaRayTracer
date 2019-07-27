@@ -330,6 +330,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="DeviceHandler.h" />
     <ClInclude Include="GlobalCudaArray.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="Popup.h" />
+    <ClInclude Include="RayTracer.h" />
+    <None Include="Vertex.cuh" />
     <None Include="Scene.cuh">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -368,6 +371,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="ObjFileReader.h" />
     <ClInclude Include="PerfTimer.h" />
     <ClInclude Include="preProc.h" />
     <ClInclude Include="Profiler.h" />
@@ -402,8 +407,11 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="DeviceHandler.cpp" />
     <ClCompile Include="InputHandler.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="ObjFileReader.cpp" />
     <ClCompile Include="PerfTimer.cpp" />
     <ClCompile Include="Profiler.cpp" />
+    <ClCompile Include="RayTracer.cpp" />
     <ClCompile Include="ShaderSet.cpp" />
     <ClCompile Include="Tests.cpp" />
     <ClCompile Include="TextureRenderer.cpp" />
