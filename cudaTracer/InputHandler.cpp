@@ -63,7 +63,7 @@ void InputHandler::detectInput(void) {
     dinmouse->GetDeviceState(sizeof(DIMOUSESTATE), (LPVOID)&mousestate);
 }
 
-void InputHandler::update() {
+void InputHandler::update(float dt) {
     reset();
     detectInput();
 

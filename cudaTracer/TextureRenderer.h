@@ -8,11 +8,12 @@
 
 #include "Camera.h"
 #include "InputHandler.h"
+#include "Service.h"
 
 // Forward declarations
 class DeviceHandler;
 
-class TextureRenderer {
+class TextureRenderer : public Service {
    private:
     DeviceHandler* m_deviceHandler;
 
@@ -35,10 +36,8 @@ class TextureRenderer {
     ~TextureRenderer();
 
     void update(float p_dt);
-    void draw();
     void copyToHostArray(float* out_dest);
-    D3DCudaTextureSet* getTextureSet() { return &m_textureSet;
-    }
+    D3DCudaTextureSet* getTextureSet() { return &m_textureSet; }
 
    private:
     void initTexture();
@@ -47,5 +46,6 @@ class TextureRenderer {
     void initQuad();
     void initStates();
     void initInterop();
+    void draw();
     void termInterop();
 };

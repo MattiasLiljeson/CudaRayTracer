@@ -13,19 +13,14 @@
 
 #include "DeviceHandler.h"
 
+#include "Service.h"
+
 using namespace std;
 
 // Pre def
 class DeviceHandler;
 
-class DebugGUI {
-    //=========================================================================
-    // Variables
-    //=========================================================================
-   private:
-    // vector<TwBar*> m_bars;
-    // vector<string> m_barNames;
-
+class DebugGUI : public Service {
    public:
     enum Types {
         DG_BOOL = TW_TYPE_BOOLCPP,
@@ -38,26 +33,10 @@ class DebugGUI {
     enum Permissions { READ_ONLY, READ_WRITE };
     enum Result { FAILED, SUCCESS };
 
-    //=========================================================================
-    // Functions
-    //=========================================================================
-   private:
-    DebugGUI();
-    DebugGUI(DebugGUI const&);        // Don't Implement
-    void operator=(DebugGUI const&);  // Don't implement
+    DebugGUI(ID3D11Device* p_device, int p_wndWidth, int p_wndHeight);
 
-    string stringFromParams(string p_barName, string p_varName,
-                            string p_paramName, int p_arg);
-    string stringFromParams(string p_barName, string p_varName,
-                            string p_paramName, int p_arg1, int p_arg2);
-    string stringFromParams(string p_barName, string p_varName,
-                            string p_paramName, vector<int> p_args);
-
-   public:
     TwBar* barFromString(string p_barName);  // Should be private
 
-    static DebugGUI* getInstance();
-    void init(ID3D11Device* p_device, int p_wndWidth, int p_wndHeight);
     Result addVar(string p_barName, Types p_type, Permissions p_permissions,
                   string p_name, void* p_var);
     Result addVar(string p_barName, Types p_type, Permissions p_permissions,
@@ -69,10 +48,18 @@ class DebugGUI {
 
     /** Returns zero on fail and nonzero on success as per TwEventWin */
     int updateMsgProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    void draw();
+    void update(float dt);
     void terminate();
     void setBarVisibility(string p_bar, bool p_show);
     void setBarIconification(string p_bar, bool p_iconify);
+
+   private:
+    string stringFromParams(string p_barName, string p_varName,
+                            string p_paramName, int p_arg);
+    string stringFromParams(string p_barName, string p_varName,
+                            string p_paramName, int p_arg1, int p_arg2);
+    string stringFromParams(string p_barName, string p_varName,
+                            string p_paramName, vector<int> p_args);
 };
 
 #endif  // DebugGUI_h

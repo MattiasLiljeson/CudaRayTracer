@@ -2,11 +2,12 @@
 #define INPUTHANDLER_H
 
 #include <dinput.h>
+#include "Service.h"
 
 #pragma comment (lib, "dinput8.lib")
 #pragma comment (lib, "dxguid.lib")
 
-class InputHandler
+class InputHandler : public Service
 {
 private:
 	HINSTANCE* hInstance;
@@ -29,7 +30,7 @@ public:
 	~InputHandler();	//closes DirectInput and releases memory
 	void reset();
 	void detectInput(void);    // gets the current input state
-	void update();
+	void update(float dt);
 	bool getKey(int key);
 	long getMouse(int axis);
 };

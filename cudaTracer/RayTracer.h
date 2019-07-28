@@ -14,6 +14,8 @@
 #include "lodepng.h"
 #include "tracer.cuh"
 
+#include "Service.h"
+
 class CudaMesh {
    public:
     GlobalCudaVector<Vertex> vertices;
@@ -61,8 +63,8 @@ class CudaMesh {
     }
 };
 
-class RayTracer {
-    Camera* camera;
+class RayTracer : public Service{
+    Camera camera;
     InputHandler* input;
 
     // cuda
@@ -74,7 +76,7 @@ class RayTracer {
 
    public:
     RayTracer(D3DCudaTextureSet* textureSet, int width, int height,
-              InputHandler* p_input, Camera* p_camera);
+              InputHandler* p_input);
 
     void addDebugGuiStuff();
 

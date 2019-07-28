@@ -13,7 +13,8 @@ bool DeviceHandler::g_returnPressed = false;
 LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	// See if DebugGUI (AntTweakbar) catches the msg first
-	if( DebugGUI::getInstance()->updateMsgProc(hWnd, message, wParam, lParam) ){
+    DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
+	if( dg && dg->updateMsgProc(hWnd, message, wParam, lParam) ){
 		return 0;
 	}
 

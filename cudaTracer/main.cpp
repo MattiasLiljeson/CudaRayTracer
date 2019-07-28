@@ -18,117 +18,58 @@
 #include <lodepng.h>
 #include "Camera.h"
 
+#include "PicDumper.h"
+
 #include "Popup.h"
 #include "RayTracer.h"
-
-// 2^n + 1. For diamond square algorithm
+#include "Statistics.h"
 
 #define PIC_WIDTH 640
 #define PIC_HEIGHT 480
 
-void doView(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
-            int nCmdShow);
-void copyFloatsToCharVector(vector<float>& p_arr,
-                            vector<unsigned char>& out_img);
+void prepareServices(HINSTANCE hInstance, DeviceHandler* deviceHandler) {
 
-void dumpPicToDisk(TextureRenderer* texRender) {
-    DeviceHandler::g_returnPressed = false;
-    static int cnt = 0;
-    cnt++;
-    char buf[128];
-    sprintf(buf, "R%.3d-%ix%i.png", cnt, PIC_WIDTH, PIC_HEIGHT);
-    string timerName(buf);
+    static InputHandler input(&hInstance, deviceHandler->getHWnd());
+    static TextureRenderer texRender(deviceHandler, PIC_WIDTH, PIC_HEIGHT);
+    static RayTracer tracer(texRender.getTextureSet(), PIC_WIDTH, PIC_HEIGHT,
+                            &input);
+    static Statistics stats;
+    static PicDumper dumper(PIC_WIDTH, PIC_HEIGHT);
+    static DebugGUI dg(deviceHandler->getDevice(),
+                       deviceHandler->getWindowHeight(),
+                       deviceHandler->getWindowHeight());
 
-    unsigned int picSize = PIC_WIDTH * 4 * PIC_HEIGHT;
-    vector<float> arr;
-    arr.resize(picSize);
-    texRender->copyToHostArray(&arr[0]);
-    vector<unsigned char> img;
-    img.resize(picSize);
-    copyFloatsToCharVector(arr, img);
-    unsigned error = lodepng::encode(buf, img, PIC_WIDTH, PIC_HEIGHT);
+    ServiceRegistry::getInstance().add<InputHandler>(&input);
+    ServiceRegistry::getInstance().add<RayTracer>(&tracer);
+    ServiceRegistry::getInstance().add<TextureRenderer>(&texRender);
+    ServiceRegistry::getInstance().add<Statistics>(&stats);
+    ServiceRegistry::getInstance().add<PicDumper>(&dumper);
+    ServiceRegistry::getInstance().add<DebugGUI>(&dg);
 }
 
 #ifndef _TEST
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow) {
-    Profiler* prof = Profiler::getInstance();
-
     int wndWidth = PIC_WIDTH + 16;    // HACK: add space for borders
     int wndHeight = PIC_HEIGHT + 39;  // HACK: add space for borders and header
-    DeviceHandler* deviceHandler =
-        new DeviceHandler(hInstance, wndWidth, wndHeight);
-    D3DDebugger d3dDbg(deviceHandler->getDevice());
+    DeviceHandler deviceHandler(hInstance, wndWidth, wndHeight);
+    D3DDebugger d3dDbg(deviceHandler.getDevice());
+    prepareServices(hInstance, &deviceHandler);
 
-    DebugGUI* dg = DebugGUI::getInstance();
-
-    dg->init(deviceHandler->getDevice(), wndWidth, wndHeight);
-
-    { //set up sizes and positions of debug guis panes
-        dg->setSize("Camera", 200, 1400);
-        dg->setPosition("Camera", 0, 0);
-        dg->setVisible("Camera", false);
-
-        dg->setSize("Rays", 200, 1400);
-        dg->setPosition("Rays", 220, 0);
-        dg->setVisible("Rays", false);
-
-        dg->setSize("Mouse", 200, 1400);
-        dg->setPosition("Mouse", 420, 0);
-        dg->setVisible("Mouse", false);
-    }
-    TextureRenderer* texRender = nullptr;
-    InputHandler* input =
-        new InputHandler(&hInstance, deviceHandler->getHWnd());
-    Camera* camera = new Camera();
-
-    static float dt = 0.0f;
-    dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY, "dt", &dt);
-    static float fps = 0.0f;
-    dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY, "fps", &fps);
-
-    try {
-        texRender = new TextureRenderer(deviceHandler, PIC_WIDTH, PIC_HEIGHT);
-    } catch (thrust::system_error e) {
-        Popup::error(e.what());
-    }
-
-    RayTracer tracer(texRender->getTextureSet(), PIC_WIDTH, PIC_HEIGHT, input,
-                     camera);
-    tracer.initScene();
-
-    if (texRender) {
-        Timer timer;
-        timer.reset();
-        MSG msg = {0};
-        while (msg.message != WM_QUIT) {
-            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            } else {
-                deviceHandler->beginDrawing();
-                try {
-                    timer.tick();
-                    dt = timer.getDt();
-                    fps = 1.0f / dt;
-                    tracer.update(dt);
-                    texRender->update(dt);
-                    if (DeviceHandler::g_returnPressed) {
-                        dumpPicToDisk(texRender);
-                    }
-                    texRender->draw();
-                } catch (thrust::system_error e) {
-                    Popup::error(e.what());
-                }
-
-                DebugGUI::getInstance()->draw();
-                deviceHandler->presentFrame();
-            }
+    Timer timer;
+    timer.reset();
+    MSG msg = {0};
+    while (msg.message != WM_QUIT) {
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        } else {
+            deviceHandler.beginDrawing();
+            timer.tick();
+            ServiceRegistry::getInstance().updateAll(timer.getDt());
+            deviceHandler.presentFrame();
         }
     }
-    delete input;
-    delete texRender;
-    delete deviceHandler;
     d3dDbg.reportLiveDeviceObjects();
 }
 
@@ -160,17 +101,3 @@ int main(int argc, char** argv) {
 }
 
 #endif
-
-void copyFloatsToCharVector(vector<float>& p_arr,
-                            vector<unsigned char>& out_img) {
-    for (unsigned int i = 0; i < p_arr.size(); i++) {
-        int tmp = (int)(p_arr[i] * 256.0f);
-        if (tmp > 255) {
-            out_img[i] = 255;
-        } else if (tmp < 0) {
-            out_img[i] = 0;
-        } else {
-            out_img[i] = (unsigned char)tmp;
-        }
-    }
-}

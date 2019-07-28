@@ -330,6 +330,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="DeviceHandler.h" />
     <ClInclude Include="GlobalCudaArray.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="PicDumper.h" />
     <ClInclude Include="Popup.h" />
     <ClInclude Include="RayTracer.h" />
     <None Include="Vertex.cuh" />
@@ -376,6 +377,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="PerfTimer.h" />
     <ClInclude Include="preProc.h" />
     <ClInclude Include="Profiler.h" />
+    <ClInclude Include="Service.h" />
     <ClInclude Include="ShaderSet.h" />
     <None Include="Sphere.cuh">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -386,6 +388,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="Shape.cuh" />
+    <ClInclude Include="Statistics.h" />
     <ClInclude Include="TextureRenderer.h" />
     <ClInclude Include="D3DCudaTextureSet.h" />
     <ClInclude Include="Timer.h" />

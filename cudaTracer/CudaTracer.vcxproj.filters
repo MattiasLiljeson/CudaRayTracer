@@ -117,8 +117,14 @@
     <ClInclude Include="RayTracer.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="Shape.cuh">
-      <Filter>Cuda kernels\Shapes</Filter>
+    <ClInclude Include="Statistics.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Service.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="PicDumper.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -192,6 +198,9 @@
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
     <None Include="Vertex.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </None>
+    <None Include="Shape.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
   </ItemGroup>

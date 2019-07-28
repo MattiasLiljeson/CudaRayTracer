@@ -1,7 +1,7 @@
 #include "RayTracer.h"
 
 RayTracer::RayTracer(D3DCudaTextureSet* textureSet, int width, int height,
-                     InputHandler* p_input, Camera* p_camera) {
+                     InputHandler* p_input) {
     m_textureSet = textureSet;
     options.width = width;
     options.height = height;
@@ -12,13 +12,26 @@ RayTracer::RayTracer(D3DCudaTextureSet* textureSet, int width, int height,
     options.scale = tan(deg2rad(options.fov * 0.5f));
     options.imageAspectRatio = options.width / (float)options.height;
     input = p_input;
-    camera = p_camera;
     blockDim = 16;
     addDebugGuiStuff();
+    initScene();
 }
 
 void RayTracer::addDebugGuiStuff() {
-    DebugGUI* dg = DebugGUI::getInstance();
+    DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
+
+    dg->setSize("Camera", 200, 1400);
+    dg->setPosition("Camera", 0, 0);
+    dg->setVisible("Camera", false);
+
+    dg->setSize("Rays", 200, 1400);
+    dg->setPosition("Rays", 220, 0);
+    dg->setVisible("Rays", false);
+
+    dg->setSize("Mouse", 200, 1400);
+    dg->setPosition("Mouse", 420, 0);
+    dg->setVisible("Mouse", false);
+
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE, "fov",
                &options.fov);
     dg->addVar("Options", DebugGUI::DG_INT, DebugGUI::READ_WRITE, "blockdim",
@@ -113,24 +126,20 @@ void RayTracer::update(float p_dt) {
     scene.lightCnt = lights.size();
     scene.shapes = shapes.getDevMem();
     scene.shapeCnt = shapes.size();
-    scene.orig = camera->getPosition();
-    scene.camera = camera->getCamera().inversed();
+    scene.orig = camera.getPosition();
+    scene.camera = camera.getCamera().inversed();
 
     cudamain(options, scene, m_textureSet->cudaLinearMemory,
              m_textureSet->pitch, blockDim);
     getLastCudaError("cuda_texture_2d failed");
 }
 
-void RayTracer::perFrameDebugGuiStuff()
-// debug stuff
-{
-    static Vec3f dir[9];
+void RayTracer::perFrameDebugGuiStuff() {
     static bool added = false;  // only add ATB the first time
-    static char buffer[128];
     static int mouseY = 0;
     static int mouseX = 0;
 
-    DebugGUI* dg = DebugGUI::getInstance();
+    DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
     if (!added) {
         dg->addVar("Mouse", DebugGUI::DG_INT, DebugGUI::READ_ONLY, "X",
                    &mouseX);
@@ -140,6 +149,8 @@ void RayTracer::perFrameDebugGuiStuff()
     mouseX = input->getMouse(InputHandler::X);
     mouseY = input->getMouse(InputHandler::Y);
 
+    static Vec3f dir[9];
+    static char buffer[128];
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             float x = 320.0f * i, y = 240.0f * j;
@@ -150,12 +161,12 @@ void RayTracer::perFrameDebugGuiStuff()
             if (!added) {
                 // TODO: debug
                 sprintf_s(buffer, "ray %d %d", i, j);
-                DebugGUI::getInstance()->addVar(
-                    "Rays", DebugGUI::DG_VEC3, DebugGUI::READ_WRITE,
-                    string(buffer), &(dir[i * 3 + j]));
+                DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
+                dg->addVar("Rays", DebugGUI::DG_VEC3, DebugGUI::READ_WRITE,
+                           string(buffer), &(dir[i * 3 + j]));
             }
             dir[i * 3 + j] = Vec3f(ndc_x, ndc_y, -1.0f).normalized();
-            dir[i * 3 + j] = camera->getCamera().multVec(dir[i * 3 + j]);
+            dir[i * 3 + j] = camera.getCamera().multVec(dir[i * 3 + j]);
             dir[i * 3 + j] = dir[i * 3 + j].normalized();
         }
     }
@@ -164,22 +175,20 @@ void RayTracer::perFrameDebugGuiStuff()
 
 void RayTracer::handleInput(float p_dt) {
     static bool inputActive = false;
-    input->update();
     if (input->getKey(InputHandler::TAB)) {
         inputActive = !inputActive;
     }
     if (inputActive) {
         const float speed = 10.0f;
-        if (input->getKey(InputHandler::W)) camera->walk(speed * p_dt);
-        if (input->getKey(InputHandler::A)) camera->strafe(-speed * p_dt);
-        if (input->getKey(InputHandler::S)) camera->walk(-speed * p_dt);
-        if (input->getKey(InputHandler::D)) camera->strafe(speed * p_dt);
-        if (input->getKey(InputHandler::SPACE)) camera->ascend(speed * p_dt);
-        if (input->getKey(InputHandler::LCTRL)) camera->ascend(-speed * p_dt);
-        camera->rotateY((float)-input->getMouse(InputHandler::X) * speed *
-                        p_dt);
-        camera->pitch((float)-input->getMouse(InputHandler::Y) * speed * p_dt);
-        camera->update();
+        if (input->getKey(InputHandler::W)) camera.walk(speed * p_dt);
+        if (input->getKey(InputHandler::A)) camera.strafe(-speed * p_dt);
+        if (input->getKey(InputHandler::S)) camera.walk(-speed * p_dt);
+        if (input->getKey(InputHandler::D)) camera.strafe(speed * p_dt);
+        if (input->getKey(InputHandler::SPACE)) camera.ascend(speed * p_dt);
+        if (input->getKey(InputHandler::LCTRL)) camera.ascend(-speed * p_dt);
+        camera.rotateY((float)-input->getMouse(InputHandler::X) * speed * p_dt);
+        camera.pitch((float)-input->getMouse(InputHandler::Y) * speed * p_dt);
+        camera.update();
     }
 }
 

@@ -36,8 +36,8 @@ void Profiler::addPerfTimer( const string& p_timer, const string& p_group, bool 
 			options = " group="+p_group+" ";
 		}
 
-		DebugGUI::getInstance()->
-			addVar( m_bar, DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY,
+        DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
+        dg->addVar( m_bar, DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY,
 			perfTimer->name, &(perfTimer->lastTime), options );
 	}
 }

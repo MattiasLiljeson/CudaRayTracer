@@ -70,6 +70,7 @@ void TextureRenderer::update(float p_dt) {
 
     cudaGraphicsUnmapResources(nbResources, ppResources, stream);
     getLastCudaError("cudaGraphicsUnmapResources(3) failed");
+    draw();
 }
 
 void TextureRenderer::draw() {

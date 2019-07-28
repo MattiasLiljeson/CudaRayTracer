@@ -1,11 +1,6 @@
 #include "DebugGUI.h"
 #include "Popup.h"
 
-//=========================================================================
-// Private functions
-//=========================================================================
-DebugGUI::DebugGUI() {}
-
 TwBar* DebugGUI::barFromString(string p_barName) {
     TwBar* bar = TwGetBarByName(p_barName.c_str());
 
@@ -53,16 +48,7 @@ string DebugGUI::stringFromParams(string p_barName, string p_varName,
     return ss.str();
 }
 
-//=========================================================================
-// Public functions
-//=========================================================================
-DebugGUI* DebugGUI::getInstance() {
-    // Instantiated on first use. Guaranteed to be destroyed.
-    static DebugGUI instance;
-    return &instance;
-}
-
-void DebugGUI::init(ID3D11Device* p_device, int p_wndWidth, int p_wndHeight) {
+DebugGUI::DebugGUI(ID3D11Device* p_device, int p_wndWidth, int p_wndHeight) {
     if (!TwInit(TW_DIRECT3D11, p_device)) {
         Popup::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());
     }
@@ -119,7 +105,7 @@ void DebugGUI::setVisible(string p_barName, bool visible) {
     result = TwDefine(stringFromParams(p_barName, "", "visible", visible).c_str());
 }
 
-void DebugGUI::draw() {
+void DebugGUI::update(float dt) {
     //#ifdef USE_DEBUG_GUI
     if (!TwDraw()) {
         Popup::error(__FILE__, __FUNCTION__, __LINE__, TwGetLastError());

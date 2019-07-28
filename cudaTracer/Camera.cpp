@@ -38,7 +38,7 @@ Camera::Camera() {
     // "Camera NormDistMult", 	&planeNormDistMult, "group='Plane settings'" );
 
     // TODO: debug
-    DebugGUI* dg = DebugGUI::getInstance();
+    DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
     dg->addVar("Camera", DebugGUI::DG_VEC3, DebugGUI::READ_WRITE, "vecUp",
                &(vecUp));
     dg->addVar("Camera", DebugGUI::DG_VEC3, DebugGUI::READ_WRITE, "vecLookAt",
