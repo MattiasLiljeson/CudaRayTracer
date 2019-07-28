@@ -24,37 +24,51 @@
 #include "RayTracer.h"
 #include "Statistics.h"
 
-#define PIC_WIDTH 640
-#define PIC_HEIGHT 480
+//#define PIC_WIDTH 640
+//#define PIC_HEIGHT 480
 
-void prepareServices(HINSTANCE hInstance, DeviceHandler* deviceHandler) {
-
-    static InputHandler input(&hInstance, deviceHandler->getHWnd());
-    static TextureRenderer texRender(deviceHandler, PIC_WIDTH, PIC_HEIGHT);
-    static RayTracer tracer(texRender.getTextureSet(), PIC_WIDTH, PIC_HEIGHT,
-                            &input);
-    static Statistics stats;
-    static PicDumper dumper(PIC_WIDTH, PIC_HEIGHT);
+void prepareServices(HINSTANCE hInstance, DeviceHandler* deviceHandler,
+                     Options options) {
     static DebugGUI dg(deviceHandler->getDevice(),
-                       deviceHandler->getWindowHeight(),
+                       deviceHandler->getWindowWidth(),
                        deviceHandler->getWindowHeight());
+    static InputHandler input(&hInstance, deviceHandler->getHWnd());
+    static TextureRenderer texRender(deviceHandler, options.width,
+                                     options.height);
+    static RayTracer tracer(texRender.getTextureSet(), options.width,
+                            options.height, options);
+    static Statistics stats;
+    static PicDumper dumper(options.height, options.height);
 
-    ServiceRegistry::getInstance().add<InputHandler>(&input);
-    ServiceRegistry::getInstance().add<RayTracer>(&tracer);
-    ServiceRegistry::getInstance().add<TextureRenderer>(&texRender);
-    ServiceRegistry::getInstance().add<Statistics>(&stats);
-    ServiceRegistry::getInstance().add<PicDumper>(&dumper);
-    ServiceRegistry::getInstance().add<DebugGUI>(&dg);
+    ServiceRegistry::instance().add<InputHandler>(&input);
+    ServiceRegistry::instance().add<RayTracer>(&tracer);
+    ServiceRegistry::instance().add<TextureRenderer>(&texRender);
+    ServiceRegistry::instance().add<Statistics>(&stats);
+    ServiceRegistry::instance().add<PicDumper>(&dumper);
+    ServiceRegistry::instance().add<DebugGUI>(&dg);
 }
 
 #ifndef _TEST
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow) {
-    int wndWidth = PIC_WIDTH + 16;    // HACK: add space for borders
-    int wndHeight = PIC_HEIGHT + 39;  // HACK: add space for borders and header
+    Options options;
+    options.width = 640;
+    options.height = 480;
+    options.fov = 90;
+    options.backgroundColor = Vec<float, 3>(0.2f, 0.7f, 0.8f);
+    options.maxDepth = 5;
+    options.bias = 0.00001f;
+    options.scale = tan(deg2rad(options.fov * 0.5f));
+    options.imageAspectRatio = options.width / (float)options.height;
+
+    // HACK: add space for borders
+    int wndWidth = options.width + 16;
+    // HACK: add space for borders and header
+    int wndHeight = options.height + 39;
+
     DeviceHandler deviceHandler(hInstance, wndWidth, wndHeight);
     D3DDebugger d3dDbg(deviceHandler.getDevice());
-    prepareServices(hInstance, &deviceHandler);
+    prepareServices(hInstance, &deviceHandler, options);
 
     Timer timer;
     timer.reset();
@@ -66,7 +80,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         } else {
             deviceHandler.beginDrawing();
             timer.tick();
-            ServiceRegistry::getInstance().updateAll(timer.getDt());
+            ServiceRegistry::instance().updateAll(timer.getDt());
             deviceHandler.presentFrame();
         }
     }

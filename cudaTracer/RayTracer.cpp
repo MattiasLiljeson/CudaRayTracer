@@ -1,36 +1,20 @@
 #include "RayTracer.h"
 
 RayTracer::RayTracer(D3DCudaTextureSet* textureSet, int width, int height,
-                     InputHandler* p_input) {
+                     Options options) {
     m_textureSet = textureSet;
-    options.width = width;
-    options.height = height;
-    options.fov = 90;
-    options.backgroundColor = Vec<float, 3>(0.235294f, 0.67451f, 0.843137f);
-    options.maxDepth = 5;
-    options.bias = 0.00001f;
-    options.scale = tan(deg2rad(options.fov * 0.5f));
-    options.imageAspectRatio = options.width / (float)options.height;
-    input = p_input;
+    this->options = options;
     blockDim = 16;
     addDebugGuiStuff();
     initScene();
 }
 
 void RayTracer::addDebugGuiStuff() {
-    DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
-
-    dg->setSize("Camera", 200, 1400);
-    dg->setPosition("Camera", 0, 0);
-    dg->setVisible("Camera", false);
+    DebugGUI* dg = ServiceRegistry::instance().get<DebugGUI>();
 
     dg->setSize("Rays", 200, 1400);
     dg->setPosition("Rays", 220, 0);
     dg->setVisible("Rays", false);
-
-    dg->setSize("Mouse", 200, 1400);
-    dg->setPosition("Mouse", 420, 0);
-    dg->setVisible("Mouse", false);
 
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE, "fov",
                &options.fov);
@@ -136,19 +120,7 @@ void RayTracer::update(float p_dt) {
 
 void RayTracer::perFrameDebugGuiStuff() {
     static bool added = false;  // only add ATB the first time
-    static int mouseY = 0;
-    static int mouseX = 0;
-
-    DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
-    if (!added) {
-        dg->addVar("Mouse", DebugGUI::DG_INT, DebugGUI::READ_ONLY, "X",
-                   &mouseX);
-        dg->addVar("Mouse", DebugGUI::DG_INT, DebugGUI::READ_ONLY, "Y",
-                   &mouseY);
-    }
-    mouseX = input->getMouse(InputHandler::X);
-    mouseY = input->getMouse(InputHandler::Y);
-
+    DebugGUI* dg = ServiceRegistry::instance().get<DebugGUI>();
     static Vec3f dir[9];
     static char buffer[128];
     for (int i = 0; i < 3; ++i) {
@@ -161,7 +133,7 @@ void RayTracer::perFrameDebugGuiStuff() {
             if (!added) {
                 // TODO: debug
                 sprintf_s(buffer, "ray %d %d", i, j);
-                DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
+                DebugGUI* dg = ServiceRegistry::instance().get<DebugGUI>();
                 dg->addVar("Rays", DebugGUI::DG_VEC3, DebugGUI::READ_WRITE,
                            string(buffer), &(dir[i * 3 + j]));
             }
@@ -174,6 +146,7 @@ void RayTracer::perFrameDebugGuiStuff() {
 }
 
 void RayTracer::handleInput(float p_dt) {
+    InputHandler* input = ServiceRegistry::instance().get<InputHandler>();
     static bool inputActive = false;
     if (input->getKey(InputHandler::TAB)) {
         inputActive = !inputActive;

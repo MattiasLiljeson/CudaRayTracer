@@ -8,8 +8,8 @@
 using namespace axis;
 
 struct Texture {
-    unsigned width;
-    unsigned height;
+    int width;
+    int height;
     unsigned char *data;
 
     __host__ __device__ Texture() {

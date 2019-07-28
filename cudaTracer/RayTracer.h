@@ -63,9 +63,8 @@ class CudaMesh {
     }
 };
 
-class RayTracer : public Service{
+class RayTracer : public Service {
     Camera camera;
-    InputHandler* input;
 
     // cuda
     Options options;
@@ -76,7 +75,7 @@ class RayTracer : public Service{
 
    public:
     RayTracer(D3DCudaTextureSet* textureSet, int width, int height,
-              InputHandler* p_input);
+              Options options);
 
     void addDebugGuiStuff();
 

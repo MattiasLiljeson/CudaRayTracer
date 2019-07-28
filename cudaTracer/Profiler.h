@@ -12,7 +12,7 @@ using namespace std;
 class Profiler
 {
 public:
-	static Profiler* getInstance();
+	static Profiler* instance();
 	virtual ~Profiler(void);
 
 	void addPerfTimer( const string& p_timer, const string& p_group, bool p_doLog );

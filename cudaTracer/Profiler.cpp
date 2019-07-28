@@ -9,7 +9,7 @@
 // Public functions
 //=========================================================================
 
-Profiler* Profiler::getInstance()
+Profiler* Profiler::instance()
 {
 	// Instantiated on first use. Guaranteed to be destroyed.
 	static Profiler instance;
@@ -36,7 +36,7 @@ void Profiler::addPerfTimer( const string& p_timer, const string& p_group, bool 
 			options = " group="+p_group+" ";
 		}
 
-        DebugGUI* dg = ServiceRegistry::getInstance().get<DebugGUI>();
+        DebugGUI* dg = ServiceRegistry::instance().get<DebugGUI>();
         dg->addVar( m_bar, DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY,
 			perfTimer->name, &(perfTimer->lastTime), options );
 	}

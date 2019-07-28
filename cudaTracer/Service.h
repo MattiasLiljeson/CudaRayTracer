@@ -17,7 +17,7 @@ class ServiceRegistry {
     ServiceRegistry() {}
 
    public:
-    static ServiceRegistry& getInstance() {
+    static ServiceRegistry& instance() {
         static ServiceRegistry instance;  // Guaranteed to be destroyed.
                                           // Instantiated on first use.
         return instance;
