@@ -7,7 +7,8 @@
 #include "Vec.cuh"
 
 #include "Scene.cuh"
-void cudamain(const Options& options, const Scene &scene, const void *surface, size_t pitch );
+void cudamain(const Options &options, const Scene &scene, const void *surface,
+              size_t pitch, int blockDim);
 
 class Trace {
     unsigned char *surface;
@@ -26,7 +27,8 @@ class Trace {
                                              const Vec3f &N, const int depth);
     __device__ Vec3f reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv,
                                 Vec2f &st, const Shape *hitObject,
-                                const Vec3f &hitPoint, const Vec3f &N, const int depth);
+                                const Vec3f &hitPoint, const Vec3f &N,
+                                const int depth);
     __device__ Vec3f diffuseAndGlossy(const Vec3f &dir, uint32_t &index,
                                       Vec2f &uv, Vec2f &st,
                                       const Shape *hitObject,

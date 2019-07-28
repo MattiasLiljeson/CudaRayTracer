@@ -279,15 +279,14 @@ __global__ void kernel(unsigned char *surface) {
 }
 
 void cudamain(const Options &options, const Scene &scene, const void *surface,
-              size_t pitch) {
+              size_t pitch, int blockDim) {
     gpuErrchk(cudaMemcpyToSymbol(C_PITCH, &pitch, sizeof(size_t)));
 
     gpuErrchk(cudaMemcpyToSymbol(g_options, &options, sizeof(Options)));
     gpuErrchk(cudaMemcpyToSymbol(g_scene, &scene, sizeof(Scene)));
     gpuErrchk(cudaPeekAtLastError());
 
-    dim3 threads =
-        dim3(16, 16);  // block dimensions are fixed to be 256 threads
+    dim3 threads = dim3(blockDim, blockDim);
     dim3 grids = dim3((options.width + threads.x - 1) / threads.x,
                       (options.height + threads.y - 1) / threads.y);
 

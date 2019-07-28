@@ -59,23 +59,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DeviceHandler* deviceHandler =
         new DeviceHandler(hInstance, wndWidth, wndHeight);
     D3DDebugger d3dDbg(deviceHandler->getDevice());
-    DebugGUI::getInstance()->init(deviceHandler->getDevice(), wndWidth,
-                                  wndHeight);
-    DebugGUI::getInstance()->setSize("Camera", 200, 1400);
-    DebugGUI::getInstance()->setPosition("Camera", 0, 0);
-    // DebugGUI::getInstance()->setVisible("Camera", false);
 
-    DebugGUI::getInstance()->setSize("Rays", 200, 1400);
-    DebugGUI::getInstance()->setPosition("Rays", 220, 0);
-    // DebugGUI::getInstance()->setVisible("Rays", false);
-    DebugGUI::getInstance()->setSize("Mouse", 200, 1400);
-    DebugGUI::getInstance()->setPosition("Mouse", 420, 0);
-    // DebugGUI::getInstance()->setVisible("Mouse", false);
+    DebugGUI* dg = DebugGUI::getInstance();
 
+    dg->init(deviceHandler->getDevice(), wndWidth, wndHeight);
+
+    { //set up sizes and positions of debug guis panes
+        dg->setSize("Camera", 200, 1400);
+        dg->setPosition("Camera", 0, 0);
+        dg->setVisible("Camera", false);
+
+        dg->setSize("Rays", 200, 1400);
+        dg->setPosition("Rays", 220, 0);
+        dg->setVisible("Rays", false);
+
+        dg->setSize("Mouse", 200, 1400);
+        dg->setPosition("Mouse", 420, 0);
+        dg->setVisible("Mouse", false);
+    }
     TextureRenderer* texRender = nullptr;
     InputHandler* input =
         new InputHandler(&hInstance, deviceHandler->getHWnd());
     Camera* camera = new Camera();
+
+    static float dt = 0.0f;
+    dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY, "dt", &dt);
+    static float fps = 0.0f;
+    dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY, "fps", &fps);
 
     try {
         texRender = new TextureRenderer(deviceHandler, PIC_WIDTH, PIC_HEIGHT);
@@ -99,8 +109,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 deviceHandler->beginDrawing();
                 try {
                     timer.tick();
-                    tracer.update(timer.getDt());
-                    texRender->update(timer.getDt());
+                    dt = timer.getDt();
+                    fps = 1.0f / dt;
+                    tracer.update(dt);
+                    texRender->update(dt);
                     if (DeviceHandler::g_returnPressed) {
                         dumpPicToDisk(texRender);
                     }
@@ -124,7 +136,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 #define CATCH_CONFIG_RUNNER
 //#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-//this in one cpp file
+// this in one cpp file
 #include <iostream>
 #include "../Catch2/single_include/catch2/catch.hpp"
 int main(int argc, char** argv) {

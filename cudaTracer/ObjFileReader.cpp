@@ -161,9 +161,9 @@ void ObjFileReader::readNormals(std::vector<std::string> p_lineWords) {
 void ObjFileReader::readVertices(std::vector<std::string> p_lineWords) {
     std::array<float, 3> pos;
     //_stream >> pos[Vertex::X] >> pos[Vertex::Y] >> pos[Vertex::Z];
-    pos[Vertex::X] = (float)atof(p_lineWords[0].c_str())/50 +5.0f;
-    pos[Vertex::Y] = (float)atof(p_lineWords[1].c_str())/50 + 5.0f;
-    pos[Vertex::Z] = (float)atof(p_lineWords[2].c_str())/50 + 5.0f;
+    pos[Vertex::X] = (float)atof(p_lineWords[0].c_str()) / 50;  +1.0f;
+    pos[Vertex::Y] = (float)atof(p_lineWords[1].c_str())/50 + 1.0f;
+    pos[Vertex::Z] = (float)atof(p_lineWords[2].c_str()) / 50;  // + 2.0f;
     readPos.push_back(pos);
 }
 

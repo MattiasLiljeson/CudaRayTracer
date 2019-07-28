@@ -7,8 +7,8 @@
 template <typename T>
 class GlobalCudaVector {
    public:
-       //TODO: newing stuff like this is ugly...
     static GlobalCudaVector* fromVector(std::vector<T> vec) {
+        // TODO: newing stuff like this is and newer removing them is ugly...
         GlobalCudaVector* gcv = new GlobalCudaVector;
         for (const auto& e : vec) {
             gcv->add(e);

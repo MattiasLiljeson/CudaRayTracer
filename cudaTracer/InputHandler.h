@@ -22,7 +22,7 @@ private:
 	long mouse[2];
 
 public:
-	enum KEYBOARD{W,A,S,D,SPACE,LCTRL,F1,F2,F3,F4};
+	enum KEYBOARD{W,A,S,D,SPACE,LCTRL,TAB,F1,F2,F3,F4};
 	enum MOUSE{X,Y};
 
 	InputHandler(HINSTANCE* hInstance, HWND* hWnd); // sets up and initializes DirectInput

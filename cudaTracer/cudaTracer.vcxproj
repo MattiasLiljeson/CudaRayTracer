@@ -385,6 +385,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Test|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
+    <None Include="Shape.cuh" />
     <ClInclude Include="TextureRenderer.h" />
     <ClInclude Include="D3DCudaTextureSet.h" />
     <ClInclude Include="Timer.h" />

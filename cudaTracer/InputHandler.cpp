@@ -43,6 +43,7 @@ void InputHandler::reset() {
     keys[W] = 0;
     keys[SPACE] = 0;
     keys[LCTRL] = 0;
+    keys[TAB] = 0;
     keys[F1] = 0;
     keys[F2] = 0;
     keys[F3] = 0;
@@ -73,6 +74,7 @@ void InputHandler::update() {
     if (keystate[DIK_SPACE] & 0x80) keys[SPACE] = true;
     // if (keystate[DIK_LSHIFT] & 0x80)  // DEBUG: should be LCONTROL
     if (keystate[DIK_LCONTROL] & 0x80) keys[LCTRL] = true;
+    if (keystate[DIK_TAB] & 0x80) keys[TAB] = true;
 
     if (keystate[DIK_F1] & 0x80) keys[F1] = true;
     if (keystate[DIK_F2] & 0x80) keys[F2] = true;

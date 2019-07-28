@@ -43,7 +43,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="RayTracer.cpp" />
+    <ClCompile Include="RayTracer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h">
@@ -112,7 +114,12 @@
     <ClInclude Include="Popup.h">
       <Filter>Source\DirectX</Filter>
     </ClInclude>
-    <ClInclude Include="RayTracer.h" />
+    <ClInclude Include="RayTracer.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
