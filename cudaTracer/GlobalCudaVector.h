@@ -7,7 +7,7 @@
 template <typename T>
 class GlobalCudaVector {
    public:
-    static GlobalCudaVector* fromVector(std::vector<T> vec) {
+    static GlobalCudaVector* newFromVector(std::vector<T> vec) {
         // TODO: newing stuff like this is and newer removing them is ugly...
         GlobalCudaVector* gcv = new GlobalCudaVector;
         for (const auto& e : vec) {
@@ -15,6 +15,15 @@ class GlobalCudaVector {
         }
         return gcv;
     }
+
+    static GlobalCudaVector fromVector(std::vector<T> vec) {
+        GlobalCudaVector gcv;
+        for (const auto& e : vec) {
+            gcv.add(e);
+        }
+        return gcv;
+    }
+
     GlobalCudaVector() { cudaMem = nullptr; }
 
     template <typename... Ts>
