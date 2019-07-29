@@ -23,20 +23,6 @@ Camera::Camera() {
 
     calcView();
 
-    // halfFovAsRadians = (float)ToRadian(p_fovInDegrees / 2.0f);
-    // aspectRatio = p_aspectRatio;
-    // nearDist = p_near;
-    // farDist = p_far;
-
-    // calcProjection();
-
-    //// Debug Vars
-    // DebugGUI* dGui = DebugGUI::getInstance();
-    // dGui->addVar( "FrustumCulling", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE,
-    // "Camera NormMult", 	&planeNormMult, "group='Plane settings'" );
-    // dGui->addVar( "FrustumCulling", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE,
-    // "Camera NormDistMult", 	&planeNormDistMult, "group='Plane settings'" );
-
     // TODO: debug
     DebugGUI* dg = ServiceRegistry::instance().get<DebugGUI>();
     dg->setSize("Camera", 200, 1400);
@@ -61,22 +47,12 @@ Camera::Camera() {
 }
 
 void Camera::update() {
-    // Normalize axes
-    // D3DXVec3Normalize(&vecLookAt, &vecLookAt);
     vecLookAt = vecLookAt.normalized();
-
-    // D3DXVec3Cross(&vecUp, &vecLookAt, &vecRight);
     vecUp = vecLookAt.cross(vecRight);
-    // D3DXVec3Normalize(&vecUp, &vecUp);
     vecUp = vecUp.normalized();
-
-    // D3DXVec3Cross(&vecRight, &vecUp, &vecLookAt);
     vecRight = vecUp.cross(vecLookAt);
-    // D3DXVec3Normalize(&vecRight, &vecRight);
     vecRight = vecRight.normalized();
-
     calcView();
-    // matFinal = matView * matProjection;
 }
 
 Mat44f Camera::getCamera() { return matView; }
@@ -88,86 +64,7 @@ void Camera::getXZ(float* p_x, float* p_z) {
 
 Vec3f Camera::getPosition() { return vecPosition; }
 
-/*Frustum Camera::getFrustum()
-{
-        float a[Frustum::NUM_PLANES];
-        float b[Frustum::NUM_PLANES];
-        float c[Frustum::NUM_PLANES];
-        float d[Frustum::NUM_PLANES];
-
-        a[Frustum::F_LEFT]		= matFinal._14 + matFinal._11;
-        b[Frustum::F_LEFT]		= matFinal._24 + matFinal._21;
-        c[Frustum::F_LEFT]		= matFinal._34 + matFinal._31;
-        d[Frustum::F_LEFT]		= matFinal._44 + matFinal._41;
-
-        a[Frustum::F_RIGHT]		= matFinal._14 - matFinal._11;
-        b[Frustum::F_RIGHT]		= matFinal._24 - matFinal._21;
-        c[Frustum::F_RIGHT]		= matFinal._34 - matFinal._31;
-        d[Frustum::F_RIGHT]		= matFinal._44 - matFinal._41;
-
-        a[Frustum::F_BOTTOM]	= matFinal._14 + matFinal._12;
-        b[Frustum::F_BOTTOM]	= matFinal._24 + matFinal._22;
-        c[Frustum::F_BOTTOM]	= matFinal._34 + matFinal._32;
-        d[Frustum::F_BOTTOM]	= matFinal._44 + matFinal._42;
-
-        a[Frustum::F_TOP]		= matFinal._14 - matFinal._12;
-        b[Frustum::F_TOP]		= matFinal._24 - matFinal._22;
-        c[Frustum::F_TOP]		= matFinal._34 - matFinal._32;
-        d[Frustum::F_TOP]		= matFinal._44 - matFinal._42;
-
-        a[Frustum::F_NEAR]		= matFinal._13;
-        b[Frustum::F_NEAR]		= matFinal._23;
-        c[Frustum::F_NEAR]		= matFinal._33;
-        d[Frustum::F_NEAR]		= matFinal._43;
-
-        a[Frustum::F_FAR]		= matFinal._14 - matFinal._13;
-        b[Frustum::F_FAR]		= matFinal._24 - matFinal._23;
-        c[Frustum::F_FAR]		= matFinal._34 - matFinal._33;
-        d[Frustum::F_FAR]		= matFinal._44 - matFinal._43;
-
-        Frustum frustum;
-        for(int i=0; i<Frustum::NUM_PLANES; i++)
-        {
-                frustum.planes[i] = Plane(
-                        planeNormMult*a[i],
-                        planeNormMult*b[i],
-                        planeNormMult*c[i],
-                        planeNormDistMult*d[i]);
-        }
-
-        return frustum;
-}*/
-
 Vec3f Camera::getRight() { return vecRight; }
-
-/*void Camera::setNearAndFar( float p_near, float p_far )
-{
-        nearDist = p_near;
-        farDist = p_far;
-        calcProjection();
-}
-*/
-
-/*
-void Camera::calcProjection()
-{
-        //D3DXMatrixPerspectiveFovLH(&matProjection, halfFovAsRadians,
-aspectRatio, nearDist, farDist);
-
-        D3DXMATRIX persp;
-        ZeroMemory(persp, sizeof(D3DXMATRIX));
-
-        persp._11 = 1/(aspectRatio*(tan(halfFovAsRadians/2)));
-        persp._22 = 1/(tan(halfFovAsRadians/2));
-        persp._33 = farDist/(farDist - nearDist);
-        persp._34 = 1.0f;
-        persp._43 = (-nearDist * farDist)/(farDist - nearDist);
-
-        matProjection = persp;
-        //matInvProjection = D3DXMatrixInverse(&persp,
-D3DXMatrixDeterminant(&persp),&persp);
-}
-*/
 
 void Camera::calcView() {
     float x = -vecPosition.dot(vecRight);
@@ -194,7 +91,7 @@ void Camera::calcView() {
     matView[2][3] = 0.0f;
     matView[3][3] = 1.0f;
 
-    ray = matView./*inversed().*/ multVec(ray);
+    ray = matView.multVec(ray);
 }
 
 void Camera::setPosition(float p_x, float p_y, float p_z) {
@@ -208,15 +105,10 @@ void Camera::setPosition(Vec3f p_pos) { vecPosition = p_pos; }
 void Camera::setLookAt(Vec3f p_lookAt) {
     vecUp = Vec3f(0.0f, 1.0f, 0.0f);
     vecLookAt = p_lookAt - vecPosition;
-    // D3DXVec3Cross(&vecRight, &vecUp, &vecLookAt);
     vecRight = vecUp.cross(vecLookAt);
-    // D3DXVec3Cross(&vecUp, &vecLookAt, &vecRight);
     vecUp = vecLookAt.cross(vecRight);
-    // D3DXVec3Normalize( &vecRight, &vecRight );
     vecRight = vecRight.normalized();
-    // D3DXVec3Normalize( &vecUp, &vecUp );
     vecUp = vecUp.normalized();
-    // D3DXVec3Normalize( &vecLookAt, &vecLookAt );
     vecLookAt = vecLookAt.normalized();
     update();
 }
@@ -224,15 +116,10 @@ void Camera::setLookAt(Vec3f p_lookAt) {
 void Camera::setDirection(Vec3f p_direction) {
     vecUp = Vec3f(0.0f, 1.0f, 0.0f);
     vecLookAt = p_direction;
-    // D3DXVec3Cross(&vecRight, &vecUp, &vecLookAt);
     vecRight = vecUp.cross(vecLookAt);
-    // D3DXVec3Cross(&vecUp, &vecLookAt, &vecRight);
     vecUp = vecLookAt.cross(vecRight);
-    // D3DXVec3Normalize( &vecRight, &vecRight );
     vecRight = vecRight.normalized();
-    // D3DXVec3Normalize( &vecUp, &vecUp );
     vecUp = vecUp.normalized();
-    // D3DXVec3Normalize( &vecLookAt, &vecLookAt );
     vecLookAt = vecLookAt.normalized();
     update();
 }
@@ -247,25 +134,14 @@ void Camera::ascend(float p_amount) { vecPosition += p_amount * vecUp; }
 
 
 void Camera::pitch(float p_angle) {
-    // D3DXMATRIX _matRotation;
-    // D3DXMatrixRotationAxis(&_matRotation, &vecRight, p_angle/p_dt);
     Mat44f rotMat = Mat44f::rotation(vecRight, p_angle);
-
-    // D3DXVec3TransformNormal(&vecUp, &vecUp, &_matRotation);
     vecUp = rotMat.multVec(vecUp);
-    // D3DXVec3TransformNormal(&vecLookAt, &vecLookAt, &_matRotation);
      vecLookAt = rotMat.multVec(vecLookAt);
 }
 
 void Camera::rotateY(float p_angle) {
-    // D3DXMATRIX _matRotation;
-    // D3DXMatrixRotationY(&_matRotation, p_angle/p_dt);
     Mat44f rotMat = Mat44f::rotationY(p_angle);
-
-    // D3DXVec3TransformNormal(&vecRight, &vecRight, &_matRotation);
     vecRight = rotMat.multVec(vecRight);
-    // D3DXVec3TransformNormal(&vecUp, &vecUp, &_matRotation);
     vecUp = rotMat.multVec(vecUp);
-    // D3DXVec3TransformNormal(&vecLookAt, &vecLookAt, &_matRotation);
     vecLookAt = rotMat.multVec(vecLookAt);
 }

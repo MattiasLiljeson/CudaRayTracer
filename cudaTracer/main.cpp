@@ -24,9 +24,6 @@
 #include "RayTracer.h"
 #include "Statistics.h"
 
-//#define PIC_WIDTH 640
-//#define PIC_HEIGHT 480
-
 void prepareServices(HINSTANCE hInstance, DeviceHandler* deviceHandler,
                      Options options) {
     static DebugGUI dg(deviceHandler->getDevice(),
