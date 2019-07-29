@@ -22,9 +22,17 @@ void RayTracer::addDebugGuiStuff() {
                &blockDim);
     dg->addVar("Options", DebugGUI::DG_CHAR, DebugGUI::READ_WRITE, "maxdepth",
                &options.maxDepth);
+    dg->addVar("Options", DebugGUI::DG_CHAR, DebugGUI::READ_WRITE, "samples",
+               &options.samples);
 }
 
 void RayTracer::initScene() {
+    {
+        // Init curand
+        curandStates = nullptr;
+        curandStates = cu_initCurand(options.width, options.height);
+    }
+
     addLights();
     addSpheres();
     addPlane();
@@ -114,7 +122,7 @@ void RayTracer::update(float p_dt) {
     scene.camera = camera.getCamera().inversed();
 
     cudamain(options, scene, m_textureSet->cudaLinearMemory,
-             m_textureSet->pitch, blockDim);
+             m_textureSet->pitch, blockDim, curandStates);
     getLastCudaError("cuda_texture_2d failed");
 }
 

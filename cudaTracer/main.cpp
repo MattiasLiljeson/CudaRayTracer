@@ -52,8 +52,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     options.width = 640;
     options.height = 480;
     options.fov = 90;
-    options.backgroundColor = Vec<float, 3>(0.2f, 0.7f, 0.8f);
     options.maxDepth = 5;
+    options.samples = 1;
+    options.backgroundColor = Vec<float, 3>(0.2f, 0.7f, 0.8f);
     options.bias = 0.00001f;
     options.scale = tan(deg2rad(options.fov * 0.5f));
     options.imageAspectRatio = options.width / (float)options.height;

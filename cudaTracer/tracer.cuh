@@ -8,7 +8,10 @@
 
 #include "Scene.cuh"
 void cudamain(const Options &options, const Scene &scene, const void *surface,
-              size_t pitch, int blockDim);
+              size_t pitch, int blockDim, unsigned char *rngStates);
+
+unsigned char *cu_initCurand(int width, int height);
+void cu_cleanCurand(unsigned char *p_rngStates);
 
 class Trace {
     unsigned char *surface;

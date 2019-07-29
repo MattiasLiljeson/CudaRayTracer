@@ -28,7 +28,6 @@ class TextureRenderer : public Service {
     ID3D11RasterizerState* m_rsDefault;    // The default rasterizer state
     ID3D11RasterizerState* m_rsWireframe;  // Debug rasterizer
 
-    // unsigned char* m_curandStates;
 
    public:
     TextureRenderer(DeviceHandler* p_deviceHandler, int p_texWidth,

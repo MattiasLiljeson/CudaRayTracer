@@ -10,6 +10,7 @@ struct Options {
     uint32_t height;
     float fov;
     uint8_t maxDepth;
+    uint8_t samples;
     Vec3f backgroundColor;
     float bias;
     float scale;
