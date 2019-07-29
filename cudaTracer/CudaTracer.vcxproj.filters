@@ -126,6 +126,12 @@
     <ClInclude Include="PicDumper.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="CudaMesh.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
