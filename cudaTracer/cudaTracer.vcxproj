@@ -30,6 +30,7 @@
     <ProjectGuid>{47E4EE5B-3F1C-40D4-9750-AC2B18F86D1B}</ProjectGuid>
     <RootNamespace>CudaTracer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>CudaRayTracer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
