@@ -82,24 +82,22 @@ class Mesh {
     __device__ void getSurfaceProperties(const Vec3f &P, const Vec3f &I,
                                          const int &index, const Vec2f &uv,
                                          Vec3f &N, Vec2f &st) const {
-        const Vec3f &v0 = vertices[indices[index * 3]].position;
-        const Vec3f &v1 = vertices[indices[index * 3 + 1]].position;
-        const Vec3f &v2 = vertices[indices[index * 3 + 2]].position;
-        Vec3f e0 = (v1 - v0).normalized();
-        Vec3f e1 = (v2 - v1).normalized();
-        N = (e0.cross(e1)).normalized();
         const Vec2f &st0 = vertices[indices[index * 3]].texCoord;
         const Vec2f &st1 = vertices[indices[index * 3 + 1]].texCoord;
         const Vec2f &st2 = vertices[indices[index * 3 + 2]].texCoord;
-        st = st0 * (1 - uv[Vec2f::X] - uv[Vec2f::Y]) + st1 * uv[Vec2f::X] +
-             st2 * uv[Vec2f::Y];
+        st = st0 * (1 - uv[X] - uv[Y]) +  //
+             st1 * uv[X] +                //
+             st2 * uv[Y];
+        const Vec3f &n0 = vertices[indices[index * 3]].normal;
+        const Vec3f &n1 = vertices[indices[index * 3 + 1]].normal;
+        const Vec3f &n2 = vertices[indices[index * 3 + 2]].normal;
+        N = n0 * (1 - uv[X] - uv[Y]) +  //
+            n1 * uv[X] +                //
+            n2 * uv[Y];
     }
 
     __device__ Vec3f evalDiffuseColor(const Vec2f &st) const {
         return texture.sample(st[0], st[1]);
-        // return Vec3f(sin(st[0]), cos(st[1]), 1.0f);
-        // return Vec3f(st[X]/2, st[Y]/2, 1.0f);
-        // return Vec3f(st[X]/2, st[Y]/2, 0.1f);
     }
 
     __device__ bool static rayTriangleIntersect(

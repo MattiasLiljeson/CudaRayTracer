@@ -84,11 +84,12 @@ void RayTracer::addSpheres() {
 }
 
 void RayTracer::addPlane() {
+    float planeSize = 100.0f;
     std::vector<Vertex> vertices{
-        Vertex(Vec3f(-25.0f, -10.0f, 25.0f), Vec2f(0.0f, 0.0f)),  //
-        Vertex(Vec3f(25.0f, -10.0f, 25.0f), Vec2f(1.0f, 0.0f)),   //
-        Vertex(Vec3f(25.0f, -10.0f, -25.0f), Vec2f(1.0f, 1.0f)),  //
-        Vertex(Vec3f(-25.0f, -10.0f, -25.0f), Vec2f(1.0f, 1.0f))};
+        Vertex(Vec3f(-planeSize, -10.0f, planeSize), Vec2f(0.0f, 0.0f)),  //
+        Vertex(Vec3f(planeSize, -10.0f, planeSize), Vec2f(1.0f, 0.0f)),   //
+        Vertex(Vec3f(planeSize, -10.0f, -planeSize), Vec2f(1.0f, 1.0f)),  //
+        Vertex(Vec3f(-planeSize, -10.0f, -planeSize), Vec2f(1.0f, 1.0f))};
     std::vector<int> indices{0, 1, 3, 1, 2, 3};
     std::vector<unsigned char> texData{255, 0,   0,   0,  //
                                        0,   255, 0,   0,  //

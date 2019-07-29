@@ -173,8 +173,8 @@ Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
     // phong model is composed of a diffuse and a specular
     // reflection component.
     // [/comment]
-    Vec3f lightAmt = Vec<float, 3>(0.0f, 0.0f, 0.0f);
-    Vec3f specularColor = Vec<float, 3>(0.f, 0.0f, 0.0f);
+    Vec3f lightAmt = Vec3f(0.0f, 0.0f, 0.0f);
+    Vec3f specularColor = Vec3f(0.f, 0.0f, 0.0f);
     Vec3f shadowPointOrig =
         (dir.dot(N) < 0) ? N * g_options.bias : hitPoint - N * g_options.bias;
     // [comment]
@@ -205,8 +205,8 @@ Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
 
     Vec3f diffuse = hitObject->evalDiffuseColor(st);
 
-    hitColor = lightAmt * diffuse * object->Kd;
-    // hitColor = specularColor * object->Kd;
+    hitColor = lightAmt * diffuse * object->Kd +
+               specularColor * object->Ks;
     return hitColor;
 }
 

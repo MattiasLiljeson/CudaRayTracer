@@ -25,7 +25,7 @@ struct Vertex {
     }
     __host__ __device__ Vertex(Vec3f pos, Vec2f st) {
         position = pos;
-        normal = Vec3f(1.0f, 1.0f, 1.0f);
+        normal = Vec3f(0.0f, 1.0f, 0.0f);
         texCoord = st;
     }
     __host__ __device__ Vertex(Vec3f pos, Vec3f norm, Vec2f st) {
