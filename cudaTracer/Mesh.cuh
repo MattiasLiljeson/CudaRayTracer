@@ -3,8 +3,8 @@
 
 #include <cuda_runtime.h>
 #include "Object.cuh"
-#include "Vertex.cuh"
 #include "Texture.cuh"
+#include "Vertex.cuh"
 
 using namespace axis;
 
@@ -13,7 +13,8 @@ class Mesh {
     int triangleCnt;
     int *indices;
     Vertex *vertices;
-    Texture texture;
+    Texture diffuse;
+    Texture normals;
 
     __host__ __device__ Mesh() {
         triangleCnt = -1;
@@ -22,11 +23,12 @@ class Mesh {
     }
 
     __host__ __device__ Mesh(int *indices, int triangleCnt, Vertex *vertices,
-                             Texture texture) {
+                             Texture diffuse, Texture normals) {
         this->indices = indices;
         this->triangleCnt = triangleCnt;
         this->vertices = vertices;
-        this->texture = texture;
+        this->diffuse = diffuse;
+        this->normals = normals;
     }
 
     __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
@@ -53,22 +55,33 @@ class Mesh {
     __device__ void getSurfaceProperties(const Vec3f &P, const Vec3f &I,
                                          const int &index, const Vec2f &uv,
                                          Vec3f &N, Vec2f &st) const {
-        const Vec2f &st0 = vertices[indices[index * 3]].texCoord;
-        const Vec2f &st1 = vertices[indices[index * 3 + 1]].texCoord;
-        const Vec2f &st2 = vertices[indices[index * 3 + 2]].texCoord;
-        st = st0 * (1 - uv[X] - uv[Y]) +  //
-             st1 * uv[X] +                //
-             st2 * uv[Y];
-        const Vec3f &n0 = vertices[indices[index * 3]].normal;
-        const Vec3f &n1 = vertices[indices[index * 3 + 1]].normal;
-        const Vec3f &n2 = vertices[indices[index * 3 + 2]].normal;
-        N = n0 * (1 - uv[X] - uv[Y]) +  //
-            n1 * uv[X] +                //
-            n2 * uv[Y];
+        const Vertex &v0 = vertices[indices[index * 3]];
+        const Vertex &v1 = vertices[indices[index * 3 + 1]];
+        const Vertex &v2 = vertices[indices[index * 3 + 2]];
+
+        st = interpolate<2>(uv, v0.texCoord, v1.texCoord, v2.texCoord);
+
+        Vec3f t = interpolate<3>(uv, v0.tangent, v1.tangent, v2.tangent);
+        Vec3f b = interpolate<3>(uv, v0.bitangent, v1.bitangent, v2.bitangent);
+        Vec3f n = interpolate<3>(uv, v0.normal, v1.normal, v2.normal);
+        Vec3f normSamp = normals.sample(st);
+        normSamp = ((normSamp * 2.0f) - 1.0f);
+        N = (n + normSamp[X] * t + normSamp[Y] * b).normalized();
+        // N = n;
+    }
+
+    template <int Size>
+    __device__ Vec<float, Size> interpolate(const Vec2f &uv,
+                                            const Vec<float, Size> &v0,
+                                            const Vec<float, Size> &v1,
+                                            const Vec<float, Size> &v2) const {
+        return v0 * (1 - uv[X] - uv[Y]) +  //
+               v1 * uv[X] +                //
+               v2 * uv[Y];
     }
 
     __device__ Vec3f evalDiffuseColor(const Vec2f &st) const {
-        return texture.sample(st[0], st[1]);
+        return diffuse.sample(st);
     }
 
     __device__ bool static rayTriangleIntersect(

@@ -7,8 +7,10 @@ struct Vertex {
     enum { X, Y, Z };
     enum { U, V };
     Vec3f normal;
-    Vec3f position;
+    Vec3f tangent;
+    Vec3f bitangent;
     Vec2f texCoord;
+    Vec3f position;
 
     __host__ __device__ Vertex() {
         // Set default values which are easily identifiable

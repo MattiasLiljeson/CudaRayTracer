@@ -21,6 +21,10 @@ struct Texture {
         this->height = height;
     }
 
+    __device__ Vec3f sample(const Vec2f &uv) const {
+        return sample(uv[0], uv[1]);
+    }
+
     __device__ Vec3f sample(float u, float v) const {
         // nearest neighbor for now. TODO: support bilinear at least
         int x = (int)round(u * width) % width;

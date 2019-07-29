@@ -95,6 +95,14 @@ class Vec {
         return !(lhs == rhs);
     }
 
+    __device__ float magnitude() const {
+        float mag2 = 0.0f;
+        for (int i = 0; i < Size; ++i) {
+            mag2 += data[i] * data[i];
+        }
+        return sqrtf(mag2);
+    }
+
     __device__ Vec normalized() const {
         float mag2 = 0.0f;
         for (int i = 0; i < Size; ++i) {

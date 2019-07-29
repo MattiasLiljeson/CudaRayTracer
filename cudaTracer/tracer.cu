@@ -227,6 +227,8 @@ Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
         // hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
         hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
 
+        //return N;
+
         Object::MaterialType material = hitObject->getObject()->materialType;
         switch (material) {
             case Object::REFLECTION_AND_REFRACTION:
