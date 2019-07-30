@@ -35,13 +35,22 @@ struct Shape {
         this->mesh = mesh;
     }
 
-    __device__ void getSurfaceProperties(const Vec3f &P, const Vec3f &I,
-                                         const uint32_t &index, const Vec2f &uv,
-                                         Vec3f &N, Vec2f &st) const {
+    __device__ Vec2f getStCoords(const int &index, const Vec2f &uv) const {
         if (kind == Shape::SPHERE) {
-            sphere.getSurfaceProperties(P, I, index, uv, N, st);
+            // Could use some standard sphere mapping instead...
+            return Vec2f(1.0f, 1.0f);
         } else if (kind == Shape::MESH) {
-            mesh.getSurfaceProperties(P, I, index, uv, N, st);
+            return mesh.getStCoords(index, uv);
+        }
+        // Famous words, should never happen :D
+        return Vec2f(1.0f, 1.0f);
+    }
+    __device__ Vec3f getNormal(const Vec3f &P, const int &index,
+                               const Vec2f &uv, const Vec2f &st) const {
+        if (kind == Shape::SPHERE) {
+            return sphere.getNormal(P);
+        } else if (kind == Shape::MESH) {
+            return mesh.getNormal(index, uv, st);
         }
     }
 

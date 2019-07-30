@@ -205,8 +205,7 @@ Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
 
     Vec3f diffuse = hitObject->evalDiffuseColor(st);
 
-    hitColor = lightAmt * diffuse * object->Kd +
-               specularColor * object->Ks;
+    hitColor = lightAmt * diffuse * object->Kd + specularColor * object->Ks;
     return hitColor;
 }
 
@@ -221,16 +220,11 @@ Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
     Shape *hitObject = nullptr;
     if (trace(orig, dir, tnear, index, uv, &hitObject)) {
         Vec3f hitPoint = orig + dir * tnear;
-        Vec3f N;   // normal
-        Vec2f st;  // st coordinates
+        Vec2f st = hitObject->getStCoords(index, uv);
+        Vec3f N = hitObject->getNormal(hitPoint, index, uv, st);
 
-        // hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
-        hitObject->getSurfaceProperties(hitPoint, dir, index, uv, N, st);
-
-        //return N;
-
-        Object::MaterialType material = hitObject->getObject()->materialType;
-        switch (material) {
+        Object::MaterialType materialType = hitObject->getObject()->materialType;
+        switch (materialType) {
             case Object::REFLECTION_AND_REFRACTION:
                 return reflectionAndRefraction(dir, index, uv, st, hitObject,
                                                hitPoint, N, depth);

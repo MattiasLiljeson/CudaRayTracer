@@ -32,11 +32,9 @@ struct Sphere {
     __host__ __device__ Sphere() {}
 
     __host__ __device__ Sphere(const Vec3f &c, const float &r) {
-        //Sphere s;
         center = c;
         radius = r;
         radius2 = r * r;
-        //return s;
     }
     __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
                               int &index, Vec2f &uv) const {
@@ -53,10 +51,8 @@ struct Sphere {
 
         return true;
     }
-    __device__ void getSurfaceProperties(const Vec3f &P, const Vec3f &I,
-                                         const uint32_t &index, const Vec2f &uv,
-                                         Vec3f &N, Vec2f &st) const {
-        N = (P - center).normalized();
+    __device__ Vec3f getNormal(const Vec3f &P) const {
+        return (P - center).normalized();
     }
 };
 

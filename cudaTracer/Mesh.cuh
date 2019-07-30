@@ -52,14 +52,18 @@ class Mesh {
         return intersect;
     }
 
-    __device__ void getSurfaceProperties(const Vec3f &P, const Vec3f &I,
-                                         const int &index, const Vec2f &uv,
-                                         Vec3f &N, Vec2f &st) const {
+    __device__ Vec2f getStCoords(const int &index, const Vec2f &uv) const {
         const Vertex &v0 = vertices[indices[index * 3]];
         const Vertex &v1 = vertices[indices[index * 3 + 1]];
         const Vertex &v2 = vertices[indices[index * 3 + 2]];
+        return interpolate<2>(uv, v0.texCoord, v1.texCoord, v2.texCoord);
+    }
 
-        st = interpolate<2>(uv, v0.texCoord, v1.texCoord, v2.texCoord);
+    __device__ Vec3f getNormal(const int &index, const Vec2f &uv,
+                               const Vec2f &st) const {
+        const Vertex &v0 = vertices[indices[index * 3]];
+        const Vertex &v1 = vertices[indices[index * 3 + 1]];
+        const Vertex &v2 = vertices[indices[index * 3 + 2]];
 
         Vec3f t = interpolate<3>(uv, v0.tangent, v1.tangent, v2.tangent);
         Vec3f b = interpolate<3>(uv, v0.bitangent, v1.bitangent, v2.bitangent);
@@ -68,7 +72,7 @@ class Mesh {
         normSamp[X] = ((normSamp[X] * 2.0f) - 1.0f);
         normSamp[Y] = ((normSamp[Y] * 2.0f) - 1.0f);
         normSamp[Z] = ((normSamp[Z] * 2.0f) - 1.0f);
-        N = (n + normSamp[X] * t + normSamp[Y] * b).normalized();
+        return (n + normSamp[X] * t + normSamp[Y] * b).normalized();
     }
 
     template <int Size>
