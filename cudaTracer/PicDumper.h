@@ -18,7 +18,8 @@ class PicDumper : public Service {
     }
 
     void update(float dt) {
-        if (DeviceHandler::g_returnPressed) {
+        InputHandler* input = ServiceRegistry::instance().get<InputHandler>();
+        if (input->getKey(InputHandler::F2)) {
             TextureRenderer* tr =
                 ServiceRegistry::instance().get<TextureRenderer>();
             toDisk(tr);
@@ -27,7 +28,6 @@ class PicDumper : public Service {
 
    private:
     void toDisk(TextureRenderer* texRender) {
-        DeviceHandler::g_returnPressed = false;
         std::time_t t = std::time(0);  // t is an integer type
         char buf[128];
         sprintf(buf, "%ix%i-%i.png", picWidth, picHeight, t);
