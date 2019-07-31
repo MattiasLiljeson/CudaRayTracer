@@ -223,7 +223,8 @@ Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
         Vec2f st = hitObject->getStCoords(index, uv);
         Vec3f N = hitObject->getNormal(hitPoint, index, uv, st);
 
-        Object::MaterialType materialType = hitObject->getObject()->materialType;
+        Object::MaterialType materialType =
+            hitObject->getObject()->materialType;
         switch (materialType) {
             case Object::REFLECTION_AND_REFRACTION:
                 return reflectionAndRefraction(dir, index, uv, st, hitObject,
@@ -248,6 +249,10 @@ __device__ float randk(curandState *const localState) {
 }
 
 __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
+    unsigned int start_time = 0, stop_time = 0;
+
+    start_time = clock();
+
     // map from threadIdx/BlockIdx to pixel position
     int x = threadIdx.x + blockIdx.x * blockDim.x;
     int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -293,6 +298,13 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
     for (int i = 0; i < ALPHA; ++i) {
         pixel[i] /= g_options.samples;
     }
+
+    // stop_time = clock();
+
+    // float time = (stop_time - start_time);
+    // pixel[RED] = time*0.000001f;
+    // pixel[GREEN] = time * 0.0000001f;
+    // pixel[BLUE] = time *  0.00000001f;
 }
 
 void cudamain(const Options &options, const Scene &scene, const void *surface,
