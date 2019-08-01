@@ -314,11 +314,14 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <AdditionalOptions>--expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
       <Runtime>MD</Runtime>
+      <Defines>
+      </Defines>
     </CudaCompile>
     <CudaLink />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="tracer.cu">
+    <CudaCompile Include="main.cu" />
+    <CudaCompile Include="Tracer.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
   </ItemGroup>
@@ -333,8 +336,10 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="DeviceHandler.h" />
     <ClInclude Include="GlobalCudaArray.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="main.cuh" />
     <ClInclude Include="PicDumper.h" />
     <ClInclude Include="Popup.h" />
+    <None Include="Ray.cuh" />
     <ClInclude Include="RayTracer.h" />
     <None Include="Vertex.cuh" />
     <None Include="Scene.cuh">
@@ -396,7 +401,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="TextureRenderer.h" />
     <ClInclude Include="D3DCudaTextureSet.h" />
     <ClInclude Include="Timer.h" />
-    <CudaCompile Include="tracer.cuh" />
+    <CudaCompile Include="Tracer.cuh" />
     <ClInclude Include="Utils.h" />
     <None Include="Vec.cuh">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

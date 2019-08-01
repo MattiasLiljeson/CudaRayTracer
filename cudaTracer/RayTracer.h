@@ -12,7 +12,6 @@
 
 #include "ObjFileReader.h"
 #include "lodepng.h"
-#include "tracer.cuh"
 
 #include "Service.h"
 

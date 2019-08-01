@@ -2,15 +2,6 @@
 #include "D3DVertex.h"
 #include "LayoutFactory.h"
 
-// cuda stuph
-#include <cuda_runtime.h>
-
-#include "Mesh.cuh"
-#include "curand_kernel.h"
-
-#include "Scene.cuh"
-#include "tracer.cuh"
-
 TextureRenderer::TextureRenderer(DeviceHandler* p_deviceHandler, int p_texWidth,
                                  int p_texHeight) {
     m_deviceHandler = p_deviceHandler;

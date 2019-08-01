@@ -1,9 +1,11 @@
+#ifndef BVH_CUH
+#define BVH_CUH
+
 #include <algorithm>
 #include <vector>
 #include "Vec.cuh"
 #include "Vertex.cuh"
-#ifndef BVH_CUH
-#define BVH_CUH
+#include "Ray.cuh"
 
 using namespace vectorAxes;
 
@@ -12,17 +14,6 @@ struct Triangle {
     Triangle() : i{-1, -1, -1} {}
     Triangle(int v0, int v1, int v2) : i{v0, v1, v2} {}
     Triangle(int i, int v[]) : i{v[i], v[i + 1], v[i + 2]} {}
-};
-
-struct Ray {
-    Vec3f origin;
-    Vec3f dir;
-    float tMax;
-
-    Ray() : tMax(FLT_MAX) {}
-    Ray(const Vec3f& o, const Vec3f& d, float tMax = FLT_MAX)
-        : origin(o), dir(d), tMax(tMax) {}
-    Vec3f operator()(float t) const { return origin + dir * t; }
 };
 
 static constexpr float MachineEpsilon =

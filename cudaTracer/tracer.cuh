@@ -7,17 +7,20 @@
 #include "Vec.cuh"
 
 #include "Scene.cuh"
-void cudamain(const Options &options, const Scene &scene, const void *surface,
-              size_t pitch, int blockDim, unsigned char *rngStates);
 
-unsigned char *cu_initCurand(int width, int height);
-void cu_cleanCurand(unsigned char *p_rngStates);
+enum colors { RED, GREEN, BLUE, ALPHA, COLOR_CNT };
 
-class Trace {
+#define INF 2e10f
+
+__device__ __constant__ extern size_t C_PITCH;
+__device__ extern Options g_options;
+__device__ extern Scene g_scene;
+
+class Tracer {
     unsigned char *surface;
 
    public:
-    __device__ Trace(unsigned char *surface);
+    __device__ Tracer(unsigned char *surface);
 
     __device__ Vec3f castRay(const Vec3f &orig, const Vec3f &dir,
                              uint32_t depth);

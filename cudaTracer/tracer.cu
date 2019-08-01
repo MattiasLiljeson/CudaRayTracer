@@ -1,29 +1,14 @@
-#include <curand_kernel.h>
-#include <curand_normal.h>
-
 #include "Light.cuh"
 #include "Mat.cuh"
 #include "Options.cuh"
 #include "Sphere.cuh"
 #include "Vec.cuh"
-#include "device_launch_parameters.h"
 
 #include <cuda_runtime.h>
 #include "Scene.cuh"
 #include "cuda.h"
 #include "cudaUtils.h"
-#include "tracer.cuh"
-
-enum colors { RED, GREEN, BLUE, ALPHA, COLOR_CNT };
-
-__device__ __constant__ size_t C_PITCH;
-
-__device__ Options g_options;
-__device__ Scene g_scene;
-
-#define INF 2e10f
-
-///////////////scratchApixel
+#include "Tracer.cuh"
 
 __device__ float clamp(const float &lo, const float &hi, const float &v) {
     return fmax(lo, fmin(hi, v));
@@ -98,8 +83,8 @@ __device__ Vec3f refract(const Vec3f &I, const Vec3f &N, const float &ior) {
     return k < 0 ? 0 : eta * I + (eta * cosi - sqrtf(k)) * n;
 }
 
-bool Trace::trace(const Vec3f &orig, const Vec3f &dir, float &tNear,
-                  uint32_t &index, Vec2f &uv, const Shape **hit) {
+bool Tracer::trace(const Vec3f &orig, const Vec3f &dir, float &tNear,
+                   uint32_t &index, Vec2f &uv, const Shape **hit) {
     *hit = nullptr;
     for (int k = 0; k < g_scene.shapeCnt; ++k) {
         float tNearK = INF;
@@ -118,13 +103,13 @@ bool Trace::trace(const Vec3f &orig, const Vec3f &dir, float &tNear,
     return (*hit != nullptr);
 }
 
-Trace::Trace(unsigned char *surface) : surface(surface) {}
+Tracer::Tracer(unsigned char *surface) : surface(surface) {}
 
-Vec3f Trace::reflectionAndRefraction(const Vec3f &dir, uint32_t &index,
-                                     Vec2f &uv, Vec2f &st,
-                                     const Shape *hitObject,
-                                     const Vec3f &hitPoint, const Vec3f &N,
-                                     const int depth) {
+Vec3f Tracer::reflectionAndRefraction(const Vec3f &dir, uint32_t &index,
+                                      Vec2f &uv, Vec2f &st,
+                                      const Shape *hitObject,
+                                      const Vec3f &hitPoint, const Vec3f &N,
+                                      const int depth) {
     const Object *object = hitObject->getObject();
     Vec3f hitColor = g_options.backgroundColor;
     Vec3f reflectionDirection = N.reflect(dir).normalized();
@@ -145,9 +130,10 @@ Vec3f Trace::reflectionAndRefraction(const Vec3f &dir, uint32_t &index,
     return hitColor;
 }
 
-Vec3f Trace::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv, Vec2f &st,
-                        const Shape *hitObject, const Vec3f &hitPoint,
-                        const Vec3f &N, const int depth) {
+Vec3f Tracer::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv,
+                         Vec2f &st, const Shape *hitObject,
+                         const Vec3f &hitPoint, const Vec3f &N,
+                         const int depth) {
     Vec3f hitColor = g_options.backgroundColor;
     float kr = 0.5f;
     // fresnel(dir, N, hitObject->object.ior, kr);
@@ -161,10 +147,10 @@ Vec3f Trace::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv, Vec2f &st,
     return hitColor;
 }
 
-Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
-                              Vec2f &st, const Shape *hitObject,
-                              const Vec3f &hitPoint, const Vec3f &N,
-                              const int depth) {
+Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
+                               Vec2f &st, const Shape *hitObject,
+                               const Vec3f &hitPoint, const Vec3f &N,
+                               const int depth) {
     const Object *object = hitObject->getObject();
 
     Vec3f hitColor = g_options.backgroundColor;
@@ -209,7 +195,7 @@ Vec3f Trace::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
     return hitColor;
 }
 
-Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
+Vec3f Tracer::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
     if (depth > g_options.maxDepth) {
         return g_options.backgroundColor;
     }
@@ -241,138 +227,4 @@ Vec3f Trace::castRay(const Vec3f &orig, const Vec3f &dir, uint32_t depth) {
     }
 
     return hitColor;
-}
-
-__device__ float randk(curandState *const localState) {
-    return curand(localState) / INT32_MAX;
-    // return 0.5f;
-}
-
-__global__ void kernel(unsigned char *surface, curandState *const rngStates) {
-    unsigned int start_time = 0, stop_time = 0;
-
-    start_time = clock();
-
-    // map from threadIdx/BlockIdx to pixel position
-    int x = threadIdx.x + blockIdx.x * blockDim.x;
-    int y = threadIdx.y + blockIdx.y * blockDim.y;
-
-    // in the case where, due to quantization into grids, we have
-    // more threads than pixels, skip the threads which don't
-    // correspond to valid pixels
-    if (x >= g_options.width || y >= g_options.height) return;
-
-    // get a pointer to the pixel at (x,y)
-    float *pixel = (float *)(surface + y * C_PITCH) + 4 * x;
-    pixel[RED] = 0.0f;
-    pixel[GREEN] = 0.0f;
-    pixel[BLUE] = 0.0f;
-    pixel[ALPHA] = 1.0f;
-
-    float widthScale = 1 / (float)g_options.width;
-    float heightScale = 1 / (float)g_options.height;
-
-    curandState *localState =
-        rngStates + threadIdx.y * blockDim.x + threadIdx.x;
-    float ndcX = (2.0f * (x + 0.5f) * widthScale - 1.0f) *
-                 g_options.imageAspectRatio * g_options.scale;
-    float ndcY = (1.0f - 2.0f * (y + 0.5f) * heightScale) * g_options.scale;
-
-    for (int i = 0; i < g_options.samples; ++i) {
-        float xJitter = g_options.samples > 1 ? randk(localState) - 0.5 : 0.0f;
-        float yJitter = g_options.samples > 1 ? randk(localState) - 0.5 : 0.0f;
-
-        Vec3f dir =
-            Vec3f(ndcX + xJitter * widthScale, ndcY + yJitter * heightScale, 1)
-                .normalized();
-        dir = g_scene.camera.multVec(dir);
-        dir = dir.normalized();
-        Trace trace(surface);
-        Vec3f result = trace.castRay(g_scene.orig, dir, 0);
-
-        pixel[RED] += result[Vec3f::X];
-        pixel[GREEN] += result[Vec3f::Y];
-        pixel[BLUE] += result[Vec3f::Z];
-    }
-
-    for (int i = 0; i < ALPHA; ++i) {
-        pixel[i] /= g_options.samples;
-    }
-
-    // stop_time = clock();
-
-    // float time = (stop_time - start_time);
-    // pixel[RED] = time*0.000001f;
-    // pixel[GREEN] = time * 0.0000001f;
-    // pixel[BLUE] = time *  0.00000001f;
-}
-
-void cudamain(const Options &options, const Scene &scene, const void *surface,
-              size_t pitch, int blockDim, unsigned char *rngStates) {
-    gpuErrchk(cudaMemcpyToSymbol(C_PITCH, &pitch, sizeof(size_t)));
-
-    gpuErrchk(cudaMemcpyToSymbol(g_options, &options, sizeof(Options)));
-    gpuErrchk(cudaMemcpyToSymbol(g_scene, &scene, sizeof(Scene)));
-    gpuErrchk(cudaPeekAtLastError());
-
-    dim3 threads = dim3(blockDim, blockDim);
-    dim3 grids = dim3((options.width + threads.x - 1) / threads.x,
-                      (options.height + threads.y - 1) / threads.y);
-
-    // fprintf(stderr, "width: %d, height: %d, threads: %d, %d grids: %d, %d\n",
-    // width, height, threads.x, threads.y,
-    //        grids.x, grids.y);
-    kernel<<<grids, threads>>>((unsigned char *)surface,
-                               (curandState *)rngStates);
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-}
-
-// RNG init kernel
-__global__ void cuke_initRNG(curandState *const rngStates,
-                             const unsigned int seed, int blkXIdx) {
-    // Determine thread ID
-    unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-
-    int x = blkXIdx * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    tid = x * gridDim.x + y;
-
-    // Initialise the RNG
-    curand_init(seed, tid, 0, &rngStates[tid]);
-}
-
-unsigned char *cu_initCurand(int width, int height) {
-    cudaError_t error = cudaSuccess;
-
-    dim3 block = dim3(16, 16);  // block dimensions are fixed to be 256 threads
-    dim3 grid =
-        dim3((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
-
-    // init curand
-    curandState *rngStates = NULL;
-    cudaError_t cudaResult = cudaMalloc(
-        (void **)&rngStates,
-        grid.x * block.x * /*grid.y * block.y **/ sizeof(curandState));
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-
-    unsigned int seed = 1234;
-
-    for (int blkXIdx = 0; blkXIdx < grid.x; blkXIdx++) {
-        cuke_initRNG<<<dim3(1, grid.y), block>>>(rngStates, seed, blkXIdx);
-    }
-
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-
-    return (unsigned char *)rngStates;
-}
-
-void cu_cleanCurand(unsigned char *p_rngStates) {
-    // cleanup
-    if (p_rngStates) {
-        cudaFree(p_rngStates);
-    }
 }

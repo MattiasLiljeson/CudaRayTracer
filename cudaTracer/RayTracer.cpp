@@ -1,5 +1,6 @@
 #include "RayTracer.h"
 #include "CudaMesh.h"
+#include "main.cuh"
 
 RayTracer::RayTracer(D3DCudaTextureSet* textureSet, int width, int height,
                      Options options) {

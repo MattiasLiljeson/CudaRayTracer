@@ -135,6 +135,12 @@
     <ClInclude Include="BVH.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Ray.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="main.cuh">
+      <Filter>Cuda kernels</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -177,10 +183,13 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="tracer.cu">
+    <CudaCompile Include="main.cu">
       <Filter>Cuda kernels</Filter>
     </CudaCompile>
-    <CudaCompile Include="tracer.cuh">
+    <CudaCompile Include="Tracer.cuh">
+      <Filter>Cuda kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Tracer.cu">
       <Filter>Cuda kernels</Filter>
     </CudaCompile>
   </ItemGroup>
