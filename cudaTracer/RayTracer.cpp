@@ -86,18 +86,22 @@ void RayTracer::addSpheres() {
 }
 
 void RayTracer::addPlane() {
-    float planeSize = 100.0f;
+    float planeSize = 10.0f;
     std::vector<Vertex> vertices{
         Vertex(Vec3f(-planeSize, -10.0f, planeSize), Vec2f(0.0f, 0.0f)),  //
         Vertex(Vec3f(planeSize, -10.0f, planeSize), Vec2f(1.0f, 0.0f)),   //
         Vertex(Vec3f(planeSize, -10.0f, -planeSize), Vec2f(1.0f, 1.0f)),  //
-        Vertex(Vec3f(-planeSize, -10.0f, -planeSize), Vec2f(1.0f, 1.0f))};
+        Vertex(Vec3f(-planeSize, -10.0f, -planeSize), Vec2f(0.0f, 1.0f))};
     std::vector<int> indices{0, 1, 3, 1, 2, 3};
-    std::vector<unsigned char> texData{255, 0,   0,   0,  //
-                                       0,   255, 0,   0,  //
-                                       0,   0,   255, 0,  //
-                                       255, 0,   255, 0};
-    static CudaMesh plane(vertices, indices, 2, texData, 2, 2);
+    std::vector<unsigned char> diffuseData{0, 0, 255, 255,  //
+                                       100, 0, 255, 255,  //
+                                       100, 100, 255, 255,  //
+                                       0, 100, 255, 255};
+    std::vector<unsigned char> bumpdata{128, 128, 255, 255,  //
+                                       128, 128, 255, 255,  //
+                                       128, 128, 255, 255,  //
+                                       128, 128, 255, 255};
+    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2);
     shapes.add(plane.shape);
 }
 

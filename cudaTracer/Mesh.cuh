@@ -69,6 +69,7 @@ class Mesh {
         Vec3f t = interpolate<3>(uv, v0.tangent, v1.tangent, v2.tangent);
         Vec3f b = interpolate<3>(uv, v0.bitangent, v1.bitangent, v2.bitangent);
         Vec3f n = interpolate<3>(uv, v0.normal, v1.normal, v2.normal);
+
         Vec3f normSamp = normals.sample(st);
         normSamp = ((normSamp * 2.0f) - 1.0f);
         return (n + normSamp[X] * t + normSamp[Y] * b).normalized();

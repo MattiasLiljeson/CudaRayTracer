@@ -36,31 +36,40 @@ class CudaMesh {
     }
 
     static Texture CudaMesh::loadPngFromDisk(
-        std::string texFname, GlobalCudaVector<unsigned char>* data) {
+        std::string texFname, GlobalCudaVector<unsigned char> *data) {
         std::vector<unsigned char> image;  // the raw pixels
         unsigned width, height;
         unsigned error = lodepng::decode(image, width, height, texFname);
         // if there's an error, display it. TODO: Replace this with something
         // proper..
         if (error) {
-            std::cout << "decoder error " << error << ": "
-                      << lodepng_error_text(error) << std::endl;
+            std::string errMsg = "Error: ";
+            errMsg += error;
+            errMsg += ", ";
+            errMsg += lodepng_error_text(error);
+            errMsg += ". When decoding the png file: ";
+            errMsg += texFname;
+            Popup::error(errMsg);
         }
         *data = GlobalCudaVector<unsigned char>::fromVector(image);
         return Texture(width, height, data->getDevMem());
     }
 
     CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
-             int p_triCnt, std::vector<unsigned char> textureData, int texWidth,
+             int p_triCnt, std::vector<unsigned char> diffuseTexData,
+             std::vector<unsigned char> bumpTexData, int texWidth,
              int texHeight) {
         this->vertices = GlobalCudaVector<Vertex>::fromVector(vertices);
         this->indices = GlobalCudaVector<int>::fromVector(indices);
-        GlobalCudaVector<unsigned char> diffuseData =
-            GlobalCudaVector<unsigned char>::fromVector(textureData);
+        generateTangents();
+        diffuseData =
+            GlobalCudaVector<unsigned char>::fromVector(diffuseTexData);
+        normalsData = GlobalCudaVector<unsigned char>::fromVector(bumpTexData);
         Texture diffuseTex =
             Texture(texWidth, texHeight, diffuseData.getDevMem());
+        Texture bumpTex = Texture(texWidth, texHeight, normalsData.getDevMem());
         this->mesh = Mesh(this->indices.getDevMem(), p_triCnt,
-                          this->vertices.getDevMem(), diffuseTex, diffuseTex);
+                          this->vertices.getDevMem(), diffuseTex, bumpTex);
         shape = Shape(mesh);
         shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;
     }

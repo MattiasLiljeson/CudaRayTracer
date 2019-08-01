@@ -169,7 +169,7 @@ Vec3f Tracer::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv,
                          const int depth) {
     Vec3f hitColor = g_options.backgroundColor;
     float kr = 0.5f;
-    // fresnel(dir, N, hitObject->object.ior, kr);
+    // fresnel(dir, N, hitObject->material.ior, kr);
     Vec3f reflectionDirection = dir.reflect(N);
     Vec3f reflectionRayOrig = (reflectionDirection.dot(N) < 0)
                                   ? hitPoint + N * g_options.bias
@@ -209,7 +209,6 @@ Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
         lightDir = lightDir.normalized();
         float LdotN = fmaxf(0.f, lightDir.dot(N));
         Shape *shadowHitObject = nullptr;
-        // float tNearShadow = INF;
         // is the point in shadow, and is the nearest occluding
         // object closer to the object than the light itself?
         Ray shadowRay(shadowPointOrig, lightDir);
@@ -223,8 +222,8 @@ Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
             powf(dotp, object->specularExponent) * g_scene.lights[i].intensity;
     }
 
+    //return Vec3f(st[Vec3f::X], st[Vec3f::Y], 255.0f);
     Vec3f diffuse = hitObject->evalDiffuseColor(st);
-
     hitColor = lightAmt * diffuse * object->Kd + specularColor * object->Ks;
     return hitColor;
 }

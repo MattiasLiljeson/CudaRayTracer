@@ -57,11 +57,11 @@ struct Shape {
 
     __device__ const Object *getObject() const { return &material; }
 
-    __device__ Vec3f evalDiffuseColor(const Vec2f &vec) const {
+    __device__ Vec3f evalDiffuseColor(const Vec2f &st) const {
         if (kind == Shape::SPHERE) {
-            return material.evalDiffuseColor(vec);
+            return material.evalDiffuseColor(st);
         } else if (kind == Shape::MESH) {
-            return mesh.evalDiffuseColor(vec);
+            return mesh.evalDiffuseColor(st);
         }
     }
 
