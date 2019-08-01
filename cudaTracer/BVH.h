@@ -36,10 +36,8 @@ struct BoundingBox {
             Vec3f pos = v[t.i[vertexIdx]].position;
             for (int axisIdx = 0; axisIdx < 3; ++axisIdx) {
                 if (pos[axisIdx] > max[axisIdx]) {
-                    // TODO: Double check the Vec operations function correctly!
                     max[axisIdx] = pos[axisIdx];
                 } else if (pos[axisIdx] < min[axisIdx]) {
-                    // TODO: Double check the Vec operations function correctly!
                     min[axisIdx] = pos[axisIdx];
                 }
             }
@@ -52,12 +50,10 @@ struct BoundingBox {
     Vec3f& operator[](int i);
 
     Vec3f centroid() const {
-        // TODO: Double check the Vec calculates correctly!
         return (min + max) / 2.0f;
     }
 
     Vec3f diagonal() const {
-        // TODO: Double check the Vec calculates correctly!
         return max - min;
     }
 
