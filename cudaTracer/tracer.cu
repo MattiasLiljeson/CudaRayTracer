@@ -290,9 +290,9 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
         Trace trace(surface);
         Vec3f result = trace.castRay(g_scene.orig, dir, 0);
 
-        pixel[RED] += result.data[Vec3f::X];
-        pixel[GREEN] += result.data[Vec3f::Y];
-        pixel[BLUE] += result.data[Vec3f::Z];
+        pixel[RED] += result[Vec3f::X];
+        pixel[GREEN] += result[Vec3f::Y];
+        pixel[BLUE] += result[Vec3f::Z];
     }
 
     for (int i = 0; i < ALPHA; ++i) {

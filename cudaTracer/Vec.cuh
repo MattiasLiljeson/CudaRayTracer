@@ -3,12 +3,17 @@
 
 #include <cuda_runtime.h>
 
-namespace axis {
-enum AXIS { X, Y, Z, W };
-}
+namespace vectorAxes {
+enum EUCLIDEAN { X, Y, Z, W };
+enum UV { U, V };
+enum ST { S, T };
+}  // namespace vectorAxes
 
 template <typename T, int Size>
 class Vec {
+   private:
+    T data[Size];
+
    public:
     enum AXIS { X, Y, Z, W };
 
@@ -23,7 +28,7 @@ class Vec {
 
     __device__ constexpr Vec() {}
 
-    __device__ Vec<T, Size> operator*(const float& r) const {
+    __device__ Vec operator*(const float& r) const {
         Vec v(const_cast<Vec const&>(*this));
         for (T& d : v.data) {
             d *= r;
@@ -31,10 +36,34 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator*(const Vec<T, Size>& other) const {
+    __device__ Vec operator*(const Vec& other) const {
         Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] *= other.data[i];
+        }
+        return v;
+    }
+
+    __device__ Vec operator/(const float& r) const {
+        Vec v(const_cast<Vec const&>(*this));
+        for (T& d : v.data) {
+            d /= r;
+        }
+        return v;
+    }
+
+    __device__ Vec operator/(const Vec& other) const {
+        Vec v(*this);
+        for (int i = 0; i < Size; ++i) {
+            v.data[i] /= other.data[i];
+        }
+        return v;
+    }
+
+    __device__ Vec operator-(const float& r) const {
+        Vec v(const_cast<Vec const&>(*this));
+        for (T& d : v.data) {
+            d -= r;
         }
         return v;
     }
@@ -43,6 +72,14 @@ class Vec {
         Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] -= other.data[i];
+        }
+        return v;
+    }
+
+    __device__ Vec operator+(const float& r) const {
+        Vec v(const_cast<Vec const&>(*this));
+        for (T& d : v.data) {
+            d += r;
         }
         return v;
     }
@@ -63,9 +100,58 @@ class Vec {
         return v;
     }
 
+    __device__ Vec& operator+=(const float& r) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] += r;
+        }
+        return *this;
+    }
+
     __device__ Vec& operator+=(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] += other.data[i];
+        }
+        return *this;
+    }
+
+    __device__ Vec& operator-=(const float& r) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] -= r;
+        }
+        return *this;
+    }
+
+    __device__ Vec& operator-=(const Vec& other) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] -= other.data[i];
+        }
+        return *this;
+    }
+
+    __device__ Vec& operator*=(const float& r) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] *= r;
+        }
+        return *this;
+    }
+
+    __device__ Vec& operator*=(const Vec& other) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] *= other.data[i];
+        }
+        return *this;
+    }
+
+    __device__ Vec& operator/=(const float& r) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] /= r;
+        }
+        return *this;
+    }
+
+    __device__ Vec& operator/=(const Vec& other) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] /= other.data[i];
         }
         return *this;
     }
@@ -74,10 +160,31 @@ class Vec {
 
     __device__ const T& operator[](int idx) const { return data[idx]; }
 
+    __device__ friend Vec operator+(const float& r, const Vec& other) {
+        Vec v(other);
+        for (int i = 0; i < Size; ++i) {
+            v.data[i] = other.data[i] + r;
+        }
+        return v;
+    }
+    __device__ friend Vec operator-(const float& r, const Vec& other) {
+        Vec v(other);
+        for (int i = 0; i < Size; ++i) {
+            v.data[i] = other.data[i] - r;
+        }
+        return v;
+    }
     __device__ friend Vec operator*(const float& r, const Vec& other) {
         Vec v(other);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = other.data[i] * r;
+        }
+        return v;
+    }
+    __device__ friend Vec operator/(const float& r, const Vec& other) {
+        Vec v(other);
+        for (int i = 0; i < Size; ++i) {
+            v.data[i] = other.data[i] / r;
         }
         return v;
     }
@@ -115,8 +222,8 @@ class Vec {
         return Vec(*this);
     }
 
-    __device__ float dot(const Vec& other) const {
-        float sum = 0.0f;
+    __device__ T dot(const Vec& other) const {
+        T sum = 0;
         for (int i = 0; i < Size; ++i) {
             sum += data[i] * other.data[i];
         }
@@ -135,9 +242,6 @@ class Vec {
     __device__ Vec reflect(const Vec& N) const {
         return *this - N * 2 * dot(N);
     }
-
-    // private:
-    T data[Size];
 
     /*
     __host__ __device__ static Vec<float, 3> vec3f(float x, float y, float z) {

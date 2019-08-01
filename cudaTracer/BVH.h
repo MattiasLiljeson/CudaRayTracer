@@ -5,7 +5,7 @@
 #ifndef BVH_CUH
 #define BVH_CUH
 
-using namespace axis;
+using namespace vectorAxes;
 
 struct Triangle {
     int i[3];

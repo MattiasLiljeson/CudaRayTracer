@@ -424,6 +424,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Tests.cpp" />
     <ClCompile Include="TextureRenderer.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="VectorTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\shaders\common.hlsl">

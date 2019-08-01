@@ -42,19 +42,6 @@ TEST_CASE("GlobalCudaArray") {
     }
 }
 
-TEST_CASE("Vectors") {
-    typedef Vec<int, 3> Vec3i;
-    Vec3i x(1, 0, 0);
-    Vec3i y(0, 1, 0);
-    Vec3i z(0, 0, 1);
-    SECTION("cross product") {
-        REQUIRE(x.cross(y) == z);
-        Vec3i tmp1 = x.cross(y);
-        Vec3i tmp = y.cross(x);
-        REQUIRE(y.cross(x) == -z);
-    }
-}
-
 TEST_CASE("Matrix multiplication") {
     Mat44<int> I = Mat44<int>::identity();
     SECTION("I * I = I") {

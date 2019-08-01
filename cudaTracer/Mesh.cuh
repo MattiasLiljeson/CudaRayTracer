@@ -6,7 +6,7 @@
 #include "Texture.cuh"
 #include "Vertex.cuh"
 
-using namespace axis;
+using namespace vectorAxes;
 
 class Mesh {
    public:
@@ -69,9 +69,7 @@ class Mesh {
         Vec3f b = interpolate<3>(uv, v0.bitangent, v1.bitangent, v2.bitangent);
         Vec3f n = interpolate<3>(uv, v0.normal, v1.normal, v2.normal);
         Vec3f normSamp = normals.sample(st);
-        normSamp[X] = ((normSamp[X] * 2.0f) - 1.0f);
-        normSamp[Y] = ((normSamp[Y] * 2.0f) - 1.0f);
-        normSamp[Z] = ((normSamp[Z] * 2.0f) - 1.0f);
+        normSamp = ((normSamp * 2.0f) - 1.0f);
         return (n + normSamp[X] * t + normSamp[Y] * b).normalized();
     }
 

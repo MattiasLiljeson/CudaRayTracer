@@ -19,9 +19,6 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="DeviceHandler.cpp">
       <Filter>Source\DirectX</Filter>
     </ClCompile>
@@ -45,6 +42,12 @@
     </ClCompile>
     <ClCompile Include="RayTracer.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="VectorTest.cpp">
+      <Filter>Tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +160,9 @@
     </Filter>
     <Filter Include="Source\DirectX">
       <UniqueIdentifier>{9014a7a6-53e9-468a-8daf-1647acddfc92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{011611bb-7f99-48c4-ab99-fe85414b673f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
