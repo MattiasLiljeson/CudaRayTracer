@@ -79,7 +79,7 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
         dir = g_scene.camera.multVec(dir);
         dir = dir.normalized();
         Tracer trace(surface);
-        Vec3f result = trace.castRay(g_scene.orig, dir, 0);
+        Vec3f result = trace.castRay(Ray(g_scene.orig, dir), 0);
 
         pixel[RED] += result[Vec3f::X];
         pixel[GREEN] += result[Vec3f::Y];

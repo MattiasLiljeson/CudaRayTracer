@@ -3,6 +3,7 @@
 
 #include "Object.cuh"
 #include "Vec.cuh"
+#include "Ray.cuh"
 
 inline __device__ bool solveQuadratic(const float &a, const float &b,
                                       const float &c, float &x0, float &x1) {
@@ -36,12 +37,12 @@ struct Sphere {
         radius = r;
         radius2 = r * r;
     }
-    __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
+    __device__ bool intersect(const Ray &ray, float &tnear,
                               int &index, Vec2f &uv) const {
         // analytic solution
-        Vec3f L = orig - center;
-        float a = dir.dot(dir);
-        float b = 2 * dir.dot(L);
+        Vec3f L = ray.origin - center;
+        float a = ray.dir.dot(ray.dir);
+        float b = 2 * ray.dir.dot(L);
         float c = L.dot(L) - radius2;
         float t0, t1;
         if (!solveQuadratic(a, b, c, t0, t1)) return false;

@@ -3,6 +3,7 @@
 
 #include "Mesh.cuh"
 #include "Sphere.cuh"
+#include "Ray.cuh"
 
 struct Shape {
     enum ShapeKind { NOT_SET = -1, SPHERE, MESH };
@@ -64,12 +65,12 @@ struct Shape {
         }
     }
 
-    __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
+    __device__ bool intersect(const Ray &ray, float &tnear,
                               int &index, Vec2f &uv) const {
         if (kind == Shape::SPHERE) {
-            return sphere.intersect(orig, dir, tnear, index, uv);
+            return sphere.intersect(ray, tnear, index, uv);
         } else if (kind == Shape::MESH) {
-            return mesh.intersect(orig, dir, tnear, index, uv);
+            return mesh.intersect(ray, tnear, index, uv);
         }
     }
 };

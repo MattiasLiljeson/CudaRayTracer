@@ -6,6 +6,7 @@
 #include "Scene.cuh"
 #include "Vec.cuh"
 
+#include "Ray.cuh"
 #include "Scene.cuh"
 
 enum colors { RED, GREEN, BLUE, ALPHA, COLOR_CNT };
@@ -22,10 +23,9 @@ class Tracer {
    public:
     __device__ Tracer(unsigned char *surface);
 
-    __device__ Vec3f castRay(const Vec3f &orig, const Vec3f &dir,
-                             uint32_t depth);
-    __device__ bool trace(const Vec3f &orig, const Vec3f &dir, float &tNear,
-                          uint32_t &index, Vec2f &uv, const Shape **hit);
+    __device__ Vec3f castRay(Ray &ray, uint32_t depth);
+    __device__ bool trace(Ray &ray, uint32_t &index, Vec2f &uv,
+                          const Shape **hit);
     __device__ Vec3f reflectionAndRefraction(const Vec3f &dir, uint32_t &index,
                                              Vec2f &uv, Vec2f &st,
                                              const Shape *hitObject,

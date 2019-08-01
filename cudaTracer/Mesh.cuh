@@ -5,6 +5,8 @@
 #include "Object.cuh"
 #include "Texture.cuh"
 #include "Vertex.cuh"
+#include "Ray.cuh"
+
 
 using namespace vectorAxes;
 
@@ -31,16 +33,15 @@ class Mesh {
         this->normals = normals;
     }
 
-    __device__ bool intersect(const Vec3f &orig, const Vec3f &dir, float &tnear,
-                              int &index, Vec2f &uv) const {
+    __device__ bool intersect(const Ray &ray, float &tnear, int &index,
+                              Vec2f &uv) const {
         bool intersect = false;
         for (int k = 0; k < triangleCnt; ++k) {
             const Vec3f &v0 = vertices[indices[k * 3]].position;
             const Vec3f &v1 = vertices[indices[k * 3 + 1]].position;
             const Vec3f &v2 = vertices[indices[k * 3 + 2]].position;
             float t, u, v;
-            if (rayTriangleIntersect(v0, v1, v2, orig, dir, t, u, v) &&
-                t < tnear) {
+            if (rayTriangleIntersect(v0, v1, v2, ray, t, u, v) && t < tnear) {
                 tnear = t;
                 uv[X] = u;
                 uv[Y] = v;
@@ -87,21 +88,23 @@ class Mesh {
         return diffuse.sample(st);
     }
 
-    __device__ bool static rayTriangleIntersect(
-        const Vec3f &v0, const Vec3f &v1, const Vec3f &v2, const Vec3f &orig,
-        const Vec3f &dir, float &tnear, float &u, float &v) {
+    __device__ bool static rayTriangleIntersect(const Vec3f &v0,
+                                                const Vec3f &v1,
+                                                const Vec3f &v2, const Ray &ray,
+                                                float &tnear, float &u,
+                                                float &v) {
         Vec3f edge1 = v1 - v0;
         Vec3f edge2 = v2 - v0;
-        Vec3f pvec = dir.cross(edge2);
+        Vec3f pvec = ray.dir.cross(edge2);
         float det = edge1.dot(pvec);
         if (det == 0 || det < 0) return false;
 
-        Vec3f tvec = orig - v0;
+        Vec3f tvec = ray.origin - v0;
         u = tvec.dot(pvec);
         if (u < 0 || u > det) return false;
 
         Vec3f qvec = tvec.cross(edge1);
-        v = dir.dot(qvec);
+        v = ray.dir.dot(qvec);
         if (v < 0 || u + v > det) return false;
 
         float invDet = 1 / det;
