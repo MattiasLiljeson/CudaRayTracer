@@ -326,6 +326,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="BoundingBox.cuh" />
     <ClInclude Include="BVH.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CudaMesh.h" />
@@ -414,6 +415,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="D3DVertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BoundingBoxTest.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3DDebugger.cpp" />
     <ClCompile Include="DebugGUI.cpp" />

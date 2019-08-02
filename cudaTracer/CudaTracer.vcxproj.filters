@@ -49,6 +49,9 @@
     <ClCompile Include="VectorTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="BoundingBoxTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h">
@@ -134,9 +137,6 @@
     </ClInclude>
     <ClInclude Include="BVH.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Ray.cuh">
-      <Filter>Cuda kernels\Utils</Filter>
     </ClInclude>
     <ClInclude Include="main.cuh">
       <Filter>Cuda kernels</Filter>
@@ -227,5 +227,9 @@
     <None Include="Texture.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
+    <None Include="BoundingBox.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Ray.cuh" />
   </ItemGroup>
 </Project>

@@ -3,155 +3,32 @@
 
 #include <algorithm>
 #include <vector>
+#include "BoundingBox.cuh"
+#include "Ray.cuh"
 #include "Vec.cuh"
 #include "Vertex.cuh"
-#include "Ray.cuh"
 
 using namespace vectorAxes;
 
-struct Triangle {
-    int i[3];
-    Triangle() : i{-1, -1, -1} {}
-    Triangle(int v0, int v1, int v2) : i{v0, v1, v2} {}
-    Triangle(int i, int v[]) : i{v[i], v[i + 1], v[i + 2]} {}
-};
+namespace BVH {
 
-static constexpr float MachineEpsilon =
-    std::numeric_limits<float>::epsilon() * 0.5;
-
-inline constexpr float gamma(int n) {
-    return (n * MachineEpsilon) / (1 - n * MachineEpsilon);
-}
-
-struct BoundingBox {
-    Vec3f min;
-    Vec3f max;
-
-    BoundingBox() : min(0.0f), max(0.0f) {}
-
-    BoundingBox(const Triangle& t, const std::vector<Vertex>& v) {
-        min = FLT_MAX;
-        max = FLT_MIN;
-        for (int vertexIdx = 0; vertexIdx < 3; ++vertexIdx) {
-            Vec3f pos = v[t.i[vertexIdx]].position;
-            for (int axisIdx = 0; axisIdx < 3; ++axisIdx) {
-                if (pos[axisIdx] > max[axisIdx]) {
-                    max[axisIdx] = pos[axisIdx];
-                } else if (pos[axisIdx] < min[axisIdx]) {
-                    min[axisIdx] = pos[axisIdx];
-                }
-            }
-        }
-    }
-
-    BoundingBox(const Vec3f& min, const Vec3f& max) : min(min), max(max) {}
-
-    const Vec3f& operator[](int i) const;
-    Vec3f& operator[](int i);
-
-    Vec3f centroid() const {
-        return (min + max) / 2.0f;
-    }
-
-    Vec3f diagonal() const {
-        return max - min;
-    }
-
-    int MaximumExtent() const {
-        Vec3f d = diagonal();
-        if (d[X] > d[Y] && d[X] > d[Z]) {
-            return 0;  // X
-        } else if (d[Y] > d[Z]) {
-            return 1;  // Y
-        } else {
-            return 2;  // Z
-        }
-    }
-
-    static BoundingBox unionn(BoundingBox b1, BoundingBox b2) {
-        return BoundingBox(Vec3f(std::min(b1.min[X], b2.min[X]),
-                                 std::min(b1.min[Y], b2.min[Y]),
-                                 std::min(b1.min[Z], b2.min[Z])),
-                           Vec3f(std::max(b1.max[X], b2.max[X]),
-                                 std::max(b1.max[Y], b2.max[Y]),
-                                 std::max(b1.max[Z], b2.max[Z])));
-    }
-
-    static BoundingBox unionn(BoundingBox b, Vec3f p) {
-        return BoundingBox(Vec3f(std::min(b.min[X], p[X]),  //
-                                 std::min(b.min[Y], p[Y]),  //
-                                 std::min(b.min[Z], p[Z])),
-                           Vec3f(std::max(b.max[X], p[X]),  //
-                                 std::max(b.max[Y], p[Y]),  //
-                                 std::max(b.max[Z], p[Z])));
-    }
-
-    bool intersect(const Ray& ray, float* hitt0, float* hitt1) const {
-        float t0 = 0;
-        float t1 = ray.tMax;
-        for (int i = 0; i < 3; ++i) {
-            // Update interval for ith bounding box slab
-            float invRayDir = 1 / ray.dir[i];
-            float tNear = (min[i] - ray.origin[i]) * invRayDir;
-            float tFar = (max[i] - ray.origin[i]) * invRayDir;
-            // Update parametric interval from slab intersection values
-            if (tNear > tFar) std::swap(tNear, tFar);
-            // Update tFar to ensure robust ray–bounds intersection
-            t0 = tNear > t0 ? tNear : t0;
-            t1 = tFar < t1 ? tFar : t1;
-            if (t0 > t1) {
-                return false;
-            }
-        }
-        if (hitt0) *hitt0 = t0;
-        if (hitt1) *hitt1 = t1;
-        return true;
-    }
-
-    inline bool intersect(const Ray& ray, const Vec3f& invDir,
-                          const int dirIsNeg[3]) const {
-        const BoundingBox& bounds = *this;
-        // Check for ray intersection against  and  slabs
-        float tMin = (bounds[dirIsNeg[0]][X] - ray.origin[X]) * invDir[X];
-        float tMax = (bounds[1 - dirIsNeg[0]][X] - ray.origin[X]) * invDir[X];
-        float tyMin = (bounds[dirIsNeg[1]][Y] - ray.origin[Y]) * invDir[Y];
-        float tyMax = (bounds[1 - dirIsNeg[1]][Y] - ray.origin[Y]) * invDir[Y];
-        // Update tMax and tyMax to ensure robust bounds intersection
-        tMax *= 1 + 2 * gamma(3.0f);
-        tyMax *= 1 + 2 * gamma(3.0f);
-        if (tMin > tyMax || tyMin > tMax) return false;
-        if (tyMin > tMin) tMin = tyMin;
-        if (tyMax < tMax) tMax = tyMax;
-
-        // Check for ray intersection against  slab
-        float tzMin = (bounds[dirIsNeg[2]][Z] - ray.origin[Z]) * invDir[Z];
-        float tzMax = (bounds[1 - dirIsNeg[2]][Z] - ray.origin[Z]) * invDir[Z];
-        // Update tzMax to ensure robust bounds intersection
-        if (tMin > tzMax || tzMin > tMax) return false;
-        if (tzMin > tMin) tMin = tzMin;
-        if (tzMax < tMax) tMax = tzMax;
-
-        return (tMin < ray.tMax) && (tMax > 0);
-    }
-};
-
-struct ConstructionData {
+struct PreNode {
     int triIdx;
     BoundingBox bb;
     Vec3f centroid;
-    ConstructionData() : triIdx(-1) {}
-    ConstructionData(int i, BoundingBox bb)
+    PreNode() : triIdx(-1) {}
+    PreNode(int i, BoundingBox bb)
         : triIdx(i), bb(bb), centroid(bb.centroid()) {}
 };
 
-struct InterBvh {
+struct InterNode {
     BoundingBox bb;
-    InterBvh* children[2];
+    InterNode* children[2];
     int splitAxis;
     int firstPrimOffset;
     int primitiveCnt;
 
-    InterBvh() : bb(Vec3f(0.0f, 0.0f, 0.0f), Vec3f(0.0f, 0.0f, 0.0f)) {
+    InterNode() : bb(Vec3f(0.0f, 0.0f, 0.0f), Vec3f(0.0f, 0.0f, 0.0f)) {
         children[0] = nullptr;
         children[1] = nullptr;
         splitAxis = -1;
@@ -165,7 +42,7 @@ struct InterBvh {
         bb = bb;
     }
 
-    void interior(int axis, InterBvh* c0, InterBvh* c1) {
+    void interior(int axis, InterNode* c0, InterNode* c1) {
         children[0] = c0;
         children[1] = c1;
         bb = BoundingBox::unionn(c0->bb, c1->bb);
@@ -174,7 +51,7 @@ struct InterBvh {
     }
 };
 
-struct LinearBVHNode {
+struct LinearNode {
     BoundingBox bb;
     union {
         int primitivesOffset;   // leaf
@@ -186,30 +63,32 @@ struct LinearBVHNode {
 };
 
 class BvhFactory {
+   public:
     std::vector<Triangle> orderedPrims;
     std::vector<Triangle> primitives;
-    std::vector<ConstructionData> primitiveInfo;
-    std::vector<LinearBVHNode> nodes;
+    std::vector<PreNode> primitiveInfo;
+    std::vector<LinearNode> nodes;
 
     BvhFactory(const std::vector<Vertex>& vertices,
-               std::vector<Triangle>& primitives) {
+               const std::vector<Triangle>& primitives) {
+        this->primitives = vector<Triangle>(primitives);
         primitiveInfo.resize(primitives.size());
         for (int i = 0; i < primitives.size(); ++i) {
             primitiveInfo[i] = {i, BoundingBox(primitives[i], vertices)};
         }
 
         int totalNodes = 0;
-        InterBvh* root = recursive(0, primitives.size(), totalNodes);
+        InterNode* root = recursive(0, primitives.size(), totalNodes);
         // fetch new vector and replace yourself instead
         // primitives.swap(orderedPrims);
 
-        nodes = std::vector<LinearBVHNode>(totalNodes);
+        nodes = std::vector<LinearNode>(totalNodes);
         int offset = 0;
         flattenBvhTree(root, &offset);
     }
 
-    InterBvh* recursive(const int start, const int end, int& totalNodes) {
-        InterBvh* node = new InterBvh();  // TODO: new....
+    InterNode* recursive(const int start, const int end, int& totalNodes) {
+        InterNode* node = new InterNode();  // TODO: new....
         totalNodes++;
         BoundingBox bb;
         for (int i = start; i < end; ++i) {
@@ -227,10 +106,10 @@ class BvhFactory {
                 bb = BoundingBox::unionn(centroidBounds,
                                          primitiveInfo[i].bb.centroid());
             }
-            int dim = centroidBounds.MaximumExtent();
+            int dim = centroidBounds.maxExtent();
 
             // Partition primitives into two sets and build children
-            if (centroidBounds.max[dim] == centroidBounds.min[dim]) {
+            if (centroidBounds.bbmax[dim] == centroidBounds.bbmin[dim]) {
                 leaf(bb, primCnt, start, end, node);
                 return node;
             } else {
@@ -242,21 +121,20 @@ class BvhFactory {
 
     // partitition primitives into equally sized subsets
     void interior(const int primCnt, const int start, const int end,
-                  const int dim, InterBvh* node, int& totalNodes) {
+                  const int dim, InterNode* node, int& totalNodes) {
         int mid = (start + end) / 2;
-        std::nth_element(
-            &primitiveInfo[start], &primitiveInfo[mid],
-            &primitiveInfo[end - 1] + 1,
-            [dim](const ConstructionData& a, const ConstructionData& b) {
-                return a.bb.centroid()[dim] < b.bb.centroid()[dim];
-            });
+        std::nth_element(&primitiveInfo[start], &primitiveInfo[mid],
+                         &primitiveInfo[end - 1] + 1,
+                         [dim](const PreNode& a, const PreNode& b) {
+                             return a.bb.centroid()[dim] < b.bb.centroid()[dim];
+                         });
 
         node->interior(dim, recursive(start, mid, totalNodes),
                        recursive(mid, end, totalNodes));
     }
 
     void leaf(const BoundingBox& bb, const int primCnt, const int start,
-              const int end, InterBvh* node) {
+              const int end, InterNode* node) {
         int firstPrimOffset = orderedPrims.size();
         for (int i = start; i < end; ++i) {
             int idx = primitiveInfo[i].triIdx;
@@ -265,8 +143,8 @@ class BvhFactory {
         node->leaf(firstPrimOffset, primCnt, bb);
     }
 
-    int flattenBvhTree(InterBvh* node, int* offset) {
-        LinearBVHNode* linearNode = &nodes[*offset];
+    int flattenBvhTree(InterNode* node, int* offset) {
+        LinearNode* linearNode = &nodes[*offset];
         linearNode->bb = node->bb;
         int myOffset = (*offset)++;
         if (node->primitiveCnt > 0) {
@@ -289,7 +167,7 @@ struct SurfaceData {
 
 struct inraytracer {
     // TODO: move to cuda...
-    std::vector<LinearBVHNode> nodes;
+    std::vector<LinearNode> nodes;
     std::vector<Triangle> primitives;
 
     bool intersect(const Ray& ray, SurfaceData* surface) {
@@ -301,7 +179,7 @@ struct inraytracer {
         int currentNodeIdx = 0;
         int nodesToVisit[64];
         while (true) {
-            const LinearBVHNode* node = &nodes[currentNodeIdx];
+            const LinearNode* node = &nodes[currentNodeIdx];
             if (node->bb.intersect(ray, invDir, dirIsNeg)) {
                 if (node->primtiveCnt > 0) {
                     // leaf
@@ -352,4 +230,5 @@ void createBVH() {
     // left = min <-> median.max
     // right = median.min <-> max
 }
+}  // namespace BVH
 #endif
