@@ -23,6 +23,14 @@ class CudaMesh {
         vertices = GlobalCudaVector<Vertex>::fromVector(model.getVertices());
         indices = GlobalCudaVector<int>::fromVector(model.getIndices());
         generateTangents();
+
+        std::vector<Triangle> tris;
+        for (int i = 0; i < indices.size(); i += 3) {
+            Triangle tri(indices[i], indices[i + 1], indices[i + 2]);
+            tris.push_back(tri);
+        }
+        BVH::BvhFactory bvh(model.getVertices(), tris);
+
         // TODO: 3 is just a happy guess
         int triCnt = model.getNumVertices() / 3;
 
