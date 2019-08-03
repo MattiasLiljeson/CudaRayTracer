@@ -32,7 +32,7 @@ class Mesh {
         this->normals = normals;
     }
 
-    __device__ bool intersect(const Ray &ray, float &tnear, int &index,
+    __device__ bool intersect(Ray &ray, int &index,
                               Vec2f &uv) const {
         bool intersect = false;
         for (int k = 0; k < triangleCnt; ++k) {
@@ -40,8 +40,9 @@ class Mesh {
             const Vec3f &v1 = vertices[indices[k * 3 + 1]].position;
             const Vec3f &v2 = vertices[indices[k * 3 + 2]].position;
             float t, u, v;
-            if (rayTriangleIntersect(v0, v1, v2, ray, t, u, v) && t < tnear) {
-                tnear = t;
+            if (rayTriangleIntersect(v0, v1, v2, ray, t, u, v) &&
+                t < ray.tMax) {
+                ray.tMax = t;
                 uv[X] = u;
                 uv[Y] = v;
                 index = k;

@@ -49,14 +49,12 @@ Vec3f Tracer::castRay(Ray &ray, uint32_t depth) {
 bool Tracer::trace(Ray &ray, uint32_t &index, Vec2f &uv, const Shape **hit) {
     *hit = nullptr;
     for (int k = 0; k < g_scene.shapeCnt; ++k) {
-        float tNearK = INF;
         int indexK;
         Vec2f uvK;
         bool intersected =
-            g_scene.shapes[k].intersect(ray, tNearK, indexK, uvK);
-        if (intersected && tNearK < ray.tMax) {
+            g_scene.shapes[k].intersect(ray, indexK, uvK);
+        if (intersected) {
             *hit = &g_scene.shapes[k];
-            ray.tMax = tNearK;
             index = indexK;
             uv = uvK;
         }
