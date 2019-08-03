@@ -12,55 +12,48 @@
 
 Tracer::Tracer(unsigned char *surface) : surface(surface) {}
 
-Vec3f Tracer::castRay(Ray &ray, uint32_t depth) {
+__device__ void fillSurfaceData(SurfaceData &data) {}
+
+Vec3f Tracer::castRay(Ray &ray, int depth) {
     if (depth > g_options.maxDepth) {
         return g_options.backgroundColor;
     }
     Vec3f hitColor = g_options.backgroundColor;
     float tnear = INF;
-    Vec2f uv;
-    uint32_t index = 0;
-    Shape *hitObject = nullptr;
-    if (trace(ray, index, uv, &hitObject)) {
-        Vec3f hitPoint = ray();
-        Vec2f st = hitObject->getStCoords(index, uv);
-        Vec3f N = hitObject->getNormal(hitPoint, index, uv, st);
+    SurfaceData sd;
+    if (trace(ray, sd)) {
+        fillSurfaceData(sd);
 
-        Object::MaterialType materialType =
-            hitObject->getObject()->materialType;
+        Object::MaterialType materialType = sd.hit->getObject()->materialType;
         switch (materialType) {
             case Object::REFLECTION_AND_REFRACTION:
-                return reflectionAndRefraction(ray.dir, index, uv, st,
-                                               hitObject, hitPoint, N, depth);
+                return reflectionAndRefraction(ray.dir, sd, depth);
             case Object::REFLECTION:
-                return reflection(ray.dir, index, uv, st, hitObject, hitPoint,
-                                  N, depth);
+                return reflection(ray.dir, sd, depth);
             case Object::DIFFUSE_AND_GLOSSY:
-                return diffuseAndGlossy(ray.dir, index, uv, st, hitObject,
-                                        hitPoint, N, depth);
+                return diffuseAndGlossy(ray.dir, sd, depth);
             default:
                 return Vec3f(1.0f, 0.5f, 0.25f);
         }
     }
-
     return hitColor;
 }
 
-bool Tracer::trace(Ray &ray, uint32_t &index, Vec2f &uv, const Shape **hit) {
-    *hit = nullptr;
+bool Tracer::trace(Ray &ray, SurfaceData &data) {
+    data.hit = nullptr;
     for (int k = 0; k < g_scene.shapeCnt; ++k) {
-        int indexK;
-        Vec2f uvK;
-        bool intersected =
-            g_scene.shapes[k].intersect(ray, indexK, uvK);
+        bool intersected = g_scene.shapes[k].intersect(ray, data);
         if (intersected) {
-            *hit = &g_scene.shapes[k];
-            index = indexK;
-            uv = uvK;
+            data.hit = &g_scene.shapes[k];
         }
     }
-
-    return (*hit != nullptr);
+    if (data.hit != nullptr) {
+        data.hitPoint = ray();
+        data.st = data.hit->getStCoords(data.index, data.uv);
+        data.n =
+            data.hit->getNormal(data.hitPoint, data.index, data.uv, data.st);
+    }
+    return (data.hit != nullptr);
 }
 
 __device__ float clamp(const float &lo, const float &hi, const float &v) {
@@ -136,42 +129,36 @@ __device__ Vec3f refract(const Vec3f &I, const Vec3f &N, const float &ior) {
     return k < 0 ? 0 : eta * I + (eta * cosi - sqrtf(k)) * n;
 }
 
-Vec3f Tracer::reflectionAndRefraction(const Vec3f &dir, uint32_t &index,
-                                      Vec2f &uv, Vec2f &st,
-                                      const Shape *hitObject,
-                                      const Vec3f &hitPoint, const Vec3f &N,
+Vec3f Tracer::reflectionAndRefraction(const Vec3f &dir, SurfaceData &data,
                                       const int depth) {
-    const Object *object = hitObject->getObject();
+    const Object *object = data.hit->getObject();
     Vec3f hitColor = g_options.backgroundColor;
-    Vec3f reflectionDirection = N.reflect(dir).normalized();
-    Vec3f refractionDirection = refract(dir, N, object->ior).normalized();
-    Vec3f reflectionRayOrig = (reflectionDirection.dot(N) < 0)
-                                  ? hitPoint - N * g_options.bias
-                                  : hitPoint + N * g_options.bias;
-    Vec3f refractionRayOrig = (refractionDirection.dot(N) < 0)
-                                  ? hitPoint - N * g_options.bias
-                                  : hitPoint + N * g_options.bias;
+    Vec3f reflectionDirection = data.n.reflect(dir).normalized();
+    Vec3f refractionDirection = refract(dir, data.n, object->ior).normalized();
+    Vec3f reflectionRayOrig = (reflectionDirection.dot(data.n) < 0)
+                                  ? data.hitPoint - data.n * g_options.bias
+                                  : data.hitPoint + data.n * g_options.bias;
+    Vec3f refractionRayOrig = (refractionDirection.dot(data.n) < 0)
+                                  ? data.hitPoint - data.n * g_options.bias
+                                  : data.hitPoint + data.n * g_options.bias;
     Vec3f reflectionColor =
         castRay(Ray(reflectionRayOrig, reflectionDirection), depth + 1);
     Vec3f refractionColor =
         castRay(Ray(refractionRayOrig, refractionDirection), depth + 1);
     float kr;
-    fresnel(dir, N, object->ior, kr);
+    fresnel(dir, data.n, object->ior, kr);
     hitColor = reflectionColor * kr + refractionColor * (1 - kr);
     return hitColor;
 }
 
-Vec3f Tracer::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv,
-                         Vec2f &st, const Shape *hitObject,
-                         const Vec3f &hitPoint, const Vec3f &N,
-                         const int depth) {
+Vec3f Tracer::reflection(const Vec3f &dir, SurfaceData &data, const int depth) {
     Vec3f hitColor = g_options.backgroundColor;
     float kr = 0.5f;
     // fresnel(dir, N, hitObject->material.ior, kr);
-    Vec3f reflectionDirection = dir.reflect(N);
-    Vec3f reflectionRayOrig = (reflectionDirection.dot(N) < 0)
-                                  ? hitPoint + N * g_options.bias
-                                  : hitPoint - N * g_options.bias;
+    Vec3f reflectionDirection = dir.reflect(data.n);
+    Vec3f reflectionRayOrig = (reflectionDirection.dot(data.n) < 0)
+                                  ? data.hitPoint + data.n * g_options.bias
+                                  : data.hitPoint - data.n * g_options.bias;
     hitColor = castRay(Ray(reflectionRayOrig.normalized(),
                            reflectionDirection.normalized()),
                        depth + 1) *
@@ -179,11 +166,9 @@ Vec3f Tracer::reflection(const Vec3f &dir, uint32_t &index, Vec2f &uv,
     return hitColor;
 }
 
-Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
-                               Vec2f &st, const Shape *hitObject,
-                               const Vec3f &hitPoint, const Vec3f &N,
+Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
                                const int depth) {
-    const Object *object = hitObject->getObject();
+    const Object *object = data.hit->getObject();
 
     Vec3f hitColor = g_options.backgroundColor;
     // [comment]
@@ -193,35 +178,37 @@ Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, uint32_t &index, Vec2f &uv,
     // [/comment]
     Vec3f lightAmt = Vec3f(0.0f, 0.0f, 0.0f);
     Vec3f specularColor = Vec3f(0.f, 0.0f, 0.0f);
-    Vec3f shadowPointOrig =
-        (dir.dot(N) < 0) ? N * g_options.bias : hitPoint - N * g_options.bias;
+    Vec3f shadowPointOrig = (dir.dot(data.n) < 0)
+                                ? data.n * g_options.bias
+                                : data.hitPoint - data.n * g_options.bias;
     // [comment]
     // Loop over all lights in the scene and sum their contribution
     // up We also apply the lambert cosine law here though we
     // haven't explained yet what this means.
     // [/comment]
     for (uint32_t i = 0; i < g_scene.lightCnt; ++i) {
-        Vec3f lightDir = g_scene.lights[i].position - hitPoint;
+        Vec3f lightDir = g_scene.lights[i].position - data.hitPoint;
         // square of the distance between hitPoint and the light
         float lightDistance2 = lightDir.dot(lightDir);
         lightDir = lightDir.normalized();
-        float LdotN = fmaxf(0.f, lightDir.dot(N));
+        float LdotN = fmaxf(0.f, lightDir.dot(data.n));
         Shape *shadowHitObject = nullptr;
         // is the point in shadow, and is the nearest occluding
         // object closer to the object than the light itself?
         Ray shadowRay(shadowPointOrig, lightDir);
-        bool inShadow = trace(shadowRay, index, uv, &shadowHitObject) &&
+        SurfaceData tmp;
+        bool inShadow = trace(shadowRay, tmp) &&
                         shadowRay.tMax * shadowRay.tMax < lightDistance2;
         lightAmt += g_scene.lights[i].intensity * LdotN * (1 - inShadow);
-        Vec3f reflectionDirection = (-lightDir).reflect(N);
+        Vec3f reflectionDirection = (-lightDir).reflect(data.n);
         float dotp = fmaxf(0.f, -reflectionDirection.dot(dir));
 
         specularColor +=
             powf(dotp, object->specularExponent) * g_scene.lights[i].intensity;
     }
 
-    //return Vec3f(st[Vec3f::X], st[Vec3f::Y], 255.0f);
-    Vec3f diffuse = hitObject->evalDiffuseColor(st);
+    // return Vec3f(st[Vec3f::X], st[Vec3f::Y], 255.0f);
+    Vec3f diffuse = object->evalDiffuseColor(data.st);
     hitColor = lightAmt * diffuse * object->Kd + specularColor * object->Ks;
     return hitColor;
 }

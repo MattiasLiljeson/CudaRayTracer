@@ -65,11 +65,11 @@ struct Shape {
         }
     }
 
-    __device__ bool intersect(Ray &ray, int &index, Vec2f &uv) const {
+    __device__ bool intersect(Ray &ray, SurfaceData &data) const {
         if (kind == Shape::SPHERE) {
-            return sphere.intersect(ray, index, uv);
+            return sphere.intersect(ray, data);
         } else if (kind == Shape::MESH) {
-            return mesh.intersect(ray, index, uv);
+            return mesh.intersect(ray, data);
         }
     }
 };

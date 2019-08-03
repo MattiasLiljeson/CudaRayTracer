@@ -399,6 +399,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <None Include="Shape.cuh" />
     <ClInclude Include="Statistics.h" />
     <None Include="Texture.cuh" />
+    <ClInclude Include="SurfaceData.cuh" />
     <ClInclude Include="TextureRenderer.h" />
     <ClInclude Include="D3DCudaTextureSet.h" />
     <ClInclude Include="Timer.h" />

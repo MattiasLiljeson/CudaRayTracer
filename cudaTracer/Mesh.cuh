@@ -6,6 +6,7 @@
 #include "Ray.cuh"
 #include "Texture.cuh"
 #include "Vertex.cuh"
+#include "SurfaceData.cuh"
 
 using namespace vectorAxes;
 
@@ -32,8 +33,7 @@ class Mesh {
         this->normals = normals;
     }
 
-    __device__ bool intersect(Ray &ray, int &index,
-                              Vec2f &uv) const {
+    __device__ bool intersect(Ray &ray, SurfaceData &data) const {
         bool intersect = false;
         for (int k = 0; k < triangleCnt; ++k) {
             const Vec3f &v0 = vertices[indices[k * 3]].position;
@@ -43,9 +43,9 @@ class Mesh {
             if (rayTriangleIntersect(v0, v1, v2, ray, t, u, v) &&
                 t < ray.tMax) {
                 ray.tMax = t;
-                uv[X] = u;
-                uv[Y] = v;
-                index = k;
+                data.uv[X] = u;
+                data.uv[Y] = v;
+                data.index = k;
                 intersect |= true;
             }
         }

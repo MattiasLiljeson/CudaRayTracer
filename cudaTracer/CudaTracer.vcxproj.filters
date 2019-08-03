@@ -144,6 +144,9 @@
     <ClInclude Include="main.cuh">
       <Filter>Cuda kernels</Filter>
     </ClInclude>
+    <ClInclude Include="SurfaceData.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
