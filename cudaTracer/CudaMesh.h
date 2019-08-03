@@ -1,6 +1,8 @@
 #pragma once
 #include <lodepng.h>
 #include <vector>
+#include "BVH.h"
+#include "BoundingBox.cuh"
 #include "GlobalCudaVector.h"
 #include "Mesh.cuh"
 #include "Model.h"

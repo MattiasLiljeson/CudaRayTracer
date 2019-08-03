@@ -16,7 +16,7 @@ struct PreNode {
     int triIdx;
     BoundingBox bb;
     Vec3f centroid;
-    PreNode() : triIdx(-1) {}
+    PreNode() : triIdx(-1), centroid(Vec3f(-1.0f, -2.0f, -3.0f)) {}
     PreNode(int i, BoundingBox bb)
         : triIdx(i), bb(bb), centroid(bb.centroid()) {}
 };
@@ -27,6 +27,8 @@ struct InterNode {
     int splitAxis;
     int firstPrimOffset;
     int primitiveCnt;
+    enum NodeTypes { NOT_SET = -1, LEAF, INTERIOR };
+    NodeTypes nodeType;
 
     InterNode() : bb(Vec3f(0.0f, 0.0f, 0.0f), Vec3f(0.0f, 0.0f, 0.0f)) {
         children[0] = nullptr;
@@ -34,20 +36,23 @@ struct InterNode {
         splitAxis = -1;
         firstPrimOffset = -1;
         primitiveCnt = -1;
+        nodeType = NOT_SET;
     }
 
     void leaf(int firstPrim, int primCnt, BoundingBox bb) {
         firstPrimOffset = firstPrim;
         primitiveCnt = primCnt;
         bb = bb;
+        nodeType = LEAF;
     }
 
-    void interior(int axis, InterNode* c0, InterNode* c1) {
+    void interior(int axis, int primCnt, InterNode* c0, InterNode* c1) {
         children[0] = c0;
         children[1] = c1;
         bb = BoundingBox::unionn(c0->bb, c1->bb);
         splitAxis = axis;
-        primitiveCnt = 0;
+        primitiveCnt = primCnt;
+        nodeType = INTERIOR;
     }
 };
 
@@ -71,7 +76,7 @@ class BvhFactory {
 
     BvhFactory(const std::vector<Vertex>& vertices,
                const std::vector<Triangle>& primitives) {
-        this->primitives = vector<Triangle>(primitives);
+        this->primitives = std::vector<Triangle>(primitives);
         primitiveInfo.resize(primitives.size());
         for (int i = 0; i < primitives.size(); ++i) {
             primitiveInfo[i] = {i, BoundingBox(primitives[i], vertices)};
@@ -103,8 +108,8 @@ class BvhFactory {
             // Compute bound of primitive centroids, choose split dimension dim>
             BoundingBox centroidBounds;
             for (int i = start; i < end; ++i) {
-                bb = BoundingBox::unionn(centroidBounds,
-                                         primitiveInfo[i].bb.centroid());
+                centroidBounds = BoundingBox::unionn(
+                    centroidBounds, primitiveInfo[i].bb.centroid());
             }
             int dim = centroidBounds.maxExtent();
 
@@ -129,8 +134,10 @@ class BvhFactory {
                              return a.bb.centroid()[dim] < b.bb.centroid()[dim];
                          });
 
-        node->interior(dim, recursive(start, mid, totalNodes),
-                       recursive(mid, end, totalNodes));
+        node->interior(dim, primCnt,                       //
+                       recursive(start, mid, totalNodes),  //
+                       recursive(mid, end, totalNodes)     //
+        );
     }
 
     void leaf(const BoundingBox& bb, const int primCnt, const int start,
@@ -147,15 +154,18 @@ class BvhFactory {
         LinearNode* linearNode = &nodes[*offset];
         linearNode->bb = node->bb;
         int myOffset = (*offset)++;
-        if (node->primitiveCnt > 0) {
+        if (node->nodeType == InterNode::LEAF) {
             linearNode->primitivesOffset = node->firstPrimOffset;
             linearNode->primtiveCnt = node->primitiveCnt;
-        } else {
+        } else if (node->nodeType == InterNode::INTERIOR) {
             linearNode->axis = node->splitAxis;
             linearNode->primtiveCnt = 0;
             flattenBvhTree(node->children[0], offset);
             linearNode->secondChildOffset =
                 flattenBvhTree(node->children[1], offset);
+        } else {
+            // TODO:  replace with assert?
+            throw "THIS SHOULD NEVER HAPPEN";
         }
         return myOffset;
     }
@@ -213,22 +223,23 @@ struct inraytracer {
         }
         return hit;
     }
+
     bool intersect(const Triangle& t, const Ray& ray, SurfaceData* sd) {
         return true;
         // TODO: move to cuda and implement...
     }
 };
 
-void createBVH() {
-    // for each tri
-    // find min, max,
-    // collect centroids
-    // find median
-    // split-plane = longest min<->max-length among X,Y,Z
-    // bvh.min = min
-    // bvh.max = max
-    // left = min <-> median.max
-    // right = median.min <-> max
-}
+// void createBVH() {
+//    // for each tri
+//    // find min, max,
+//    // collect centroids
+//    // find median
+//    // split-plane = longest min<->max-length among X,Y,Z
+//    // bvh.min = min
+//    // bvh.max = max
+//    // left = min <-> median.max
+//    // right = median.min <-> max
+//}
 }  // namespace BVH
 #endif

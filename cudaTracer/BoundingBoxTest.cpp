@@ -46,6 +46,9 @@ TEST_CASE("BoundingBox") {
         REQUIRE(bb.bbmax[X] == Approx(1.0));
         REQUIRE(bb.bbmax[Y] == Approx(2.0));
         REQUIRE(bb.bbmax[Z] == Approx(3.0));
+        REQUIRE(bb.centroid()[X] == Approx(-0.5));
+        REQUIRE(bb.centroid()[Y] == Approx(0.5));
+        REQUIRE(bb.centroid()[Z] == Approx(1.5));
     }
 
     SECTION("centroid()") {

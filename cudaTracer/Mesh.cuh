@@ -3,10 +3,9 @@
 
 #include <cuda_runtime.h>
 #include "Object.cuh"
+#include "Ray.cuh"
 #include "Texture.cuh"
 #include "Vertex.cuh"
-#include "Ray.cuh"
-
 
 using namespace vectorAxes;
 
