@@ -17,37 +17,59 @@ class CudaMesh {
     GlobalCudaVector<int> indices;
     GlobalCudaVector<Triangle> triangles;
     GlobalCudaVector<LinearNode> nodes;
+
     GlobalCudaVector<unsigned char> diffuseData;
     GlobalCudaVector<unsigned char> normalsData;
     Mesh mesh;
     Shape shape;
 
-    CudaMesh(const Model &model) {
-        vertices = GlobalCudaVector<Vertex>::fromVector(model.getVertices());
-        indices = GlobalCudaVector<int>::fromVector(model.getIndices());
+    CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
+             int p_triCnt, std::vector<unsigned char> diffuseAsChars,
+             std::vector<unsigned char> normalsAsChars, int texWidth,
+             int texHeight) {
+        prepareGeometry(vertices, indices);
 
+        diffuseData =
+            GlobalCudaVector<unsigned char>::fromVector(diffuseAsChars);
+        normalsData =
+            GlobalCudaVector<unsigned char>::fromVector(normalsAsChars);
+        Texture diffuse = Texture(texWidth, texHeight, diffuseData.getDevMem());
+        Texture normals = Texture(texWidth, texHeight, normalsData.getDevMem());
+
+        createShape(diffuse, normals);
+    }
+
+    CudaMesh(const Model &model) {
+        prepareGeometry(model.getVertices(), model.getIndices());
+
+        std::string diffuseFname = model.getMaterials()[0].texturePath;
+        Texture diffuse = loadPngFromDisk(diffuseFname, &diffuseData);
+        std::string normalsFname = model.getMaterials()[0].normalMapPath;
+        Texture normals = loadPngFromDisk(normalsFname, &normalsData);
+
+        createShape(diffuse, normals);
+    }
+
+    void prepareGeometry(std::vector<Vertex> vertices,
+                         std::vector<int> indices) {
+        this->vertices = GlobalCudaVector<Vertex>::fromVector(vertices);
+        this->indices = GlobalCudaVector<int>::fromVector(indices);
         std::vector<Triangle> tris;
-        for (int i = 0; i < model.getIndices().size(); i += 3) {
-            Triangle tri(model.getIndices()[i],      //
-                         model.getIndices()[i + 1],  //
-                         model.getIndices()[i + 2]);
+        for (int i = 0; i < indices.size(); i += 3) {
+            Triangle tri(indices[i],      //
+                         indices[i + 1],  //
+                         indices[i + 2]);
             tris.push_back(tri);
         }
-        BVH::BvhFactory bvh(model.getVertices(), tris);
+        BVH::BvhFactory bvh(vertices, tris, 10);
         triangles = GlobalCudaVector<Triangle>::fromVector(bvh.orderedPrims);
         generateTangents();
         nodes = GlobalCudaVector<LinearNode>::fromVector(bvh.nodes);
+    }
 
-        // TODO: 3 is just a happy guess
-        int triCnt = model.getNumVertices() / 3;
-
-        std::string diffuseFname = model.getMaterials()[0].texturePath;
-        Texture diffuseTex = loadPngFromDisk(diffuseFname, &diffuseData);
-        std::string normalsFname = model.getMaterials()[0].normalMapPath;
-        Texture normalsTex = loadPngFromDisk(normalsFname, &normalsData);
-
-        mesh = Mesh(triangles.getDevMem(), triCnt, vertices.getDevMem(),
-                    diffuseTex, normalsTex, nodes.getDevMem());
+    void createShape(Texture diffuse, Texture normals) {
+        mesh = Mesh(triangles.getDevMem(), triangles.size(),
+                    vertices.getDevMem(), diffuse, normals, nodes.getDevMem());
         shape = Shape(mesh);
         shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;
     }
@@ -71,26 +93,6 @@ class CudaMesh {
         *data = GlobalCudaVector<unsigned char>::fromVector(image);
         return Texture(width, height, data->getDevMem());
     }
-
-    // CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
-    //         int p_triCnt, std::vector<unsigned char> diffuseTexData,
-    //         std::vector<unsigned char> bumpTexData, int texWidth,
-    //         int texHeight) {
-    //    this->vertices = GlobalCudaVector<Vertex>::fromVector(vertices);
-    //    this->indices = GlobalCudaVector<int>::fromVector(indices);
-    //    generateTangents();
-    //    diffuseData =
-    //        GlobalCudaVector<unsigned char>::fromVector(diffuseTexData);
-    //    normalsData = GlobalCudaVector<unsigned
-    //    char>::fromVector(bumpTexData); Texture diffuseTex =
-    //        Texture(texWidth, texHeight, diffuseData.getDevMem());
-    //    Texture bumpTex = Texture(texWidth, texHeight,
-    //    normalsData.getDevMem()); this->mesh = Mesh(this->indices.getDevMem(),
-    //    p_triCnt,
-    //                      this->vertices.getDevMem(), diffuseTex, bumpTex);
-    //    shape = Shape(mesh);
-    //    shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;
-    //}
 
     void CudaMesh::generateTangents() {
         // Create and set tangent and bitangent

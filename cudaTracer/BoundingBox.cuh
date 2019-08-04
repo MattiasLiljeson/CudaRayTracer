@@ -99,7 +99,6 @@ struct BoundingBox {
                 float tmp = tNear;
                 tNear = tFar;
                 tFar = tmp;
-                // swap(tNear, tFar);
             }
             // Update tFar to ensure robust ray–bounds intersection
             t0 = tNear > t0 ? tNear : t0;

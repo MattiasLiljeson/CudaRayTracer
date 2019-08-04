@@ -104,8 +104,8 @@ void RayTracer::addPlane() {
                                        128, 128, 255, 255,  //
                                        128, 128, 255, 255,  //
                                        128, 128, 255, 255};
-    //static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2);
-    //shapes.add(plane.shape);
+    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2);
+    shapes.add(plane.shape);
 }
 
 void RayTracer::addMesh() {

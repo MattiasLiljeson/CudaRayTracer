@@ -66,9 +66,10 @@ class BvhFactory {
     std::vector<Triangle> primitives;
     std::vector<PreNode> primitiveInfo;
     std::vector<LinearNode> nodes;
+    int threshold;
 
     BvhFactory(const std::vector<Vertex>& vertices,
-               const std::vector<Triangle>& primitives) {
+               const std::vector<Triangle>& primitives, int threshold) : threshold(threshold){
         this->primitives = std::vector<Triangle>(primitives);
         primitiveInfo.resize(primitives.size());
         for (int i = 0; i < primitives.size(); ++i) {
@@ -94,7 +95,7 @@ class BvhFactory {
         }
 
         int primCnt = end - start;
-        if (primCnt < 200) {
+        if (primCnt <= threshold) {
             leaf(bb, primCnt, start, end, node);
             return node;
         } else {

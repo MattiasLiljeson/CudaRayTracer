@@ -15,7 +15,6 @@ using namespace vectorAxes;
 class Mesh {
    public:
     int triangleCnt;
-    // int *indices;
     Triangle *triangles;
     Vertex *vertices;
     Texture diffuse;
@@ -30,14 +29,13 @@ class Mesh {
 
     __host__ __device__ Mesh(Triangle *triangles, int triangleCnt,
                              Vertex *vertices, Texture diffuse, Texture normals,
-                             LinearNode *nodes /*, int *indices*/) {
+                             LinearNode *nodes) {
         this->triangles = triangles;
         this->triangleCnt = triangleCnt;
         this->vertices = vertices;
         this->diffuse = diffuse;
         this->normals = normals;
         this->nodes = nodes;
-        // this->indices = indices;
     }
 
     __device__ void getStAndNormal(SurfaceData &data) const {
@@ -94,77 +92,8 @@ class Mesh {
         return diffuse.sample(st);
     }
 
-    //__device__ bool intersect(Ray &ray, SurfaceData &data) const {
-    //    bool intersect = false;
-    //    for (int k = 0; k < triangleCnt; ++k) {
-    //        //const Vec3f &v0 = vertices[indices[k * 3]].position;
-    //        //const Vec3f &v1 = vertices[indices[k * 3 + 1]].position;
-    //        //const Vec3f &v2 = vertices[indices[k * 3 + 2]].position;
-    //        const Vec3f &v0 = vertices[triangles[k][0]].position;
-    //        const Vec3f &v1 = vertices[triangles[k][1]].position;
-    //        const Vec3f &v2 = vertices[triangles[k][2]].position;
-    //        float t, u, v;
-    //        if (rayTriangleIntersect(v0, v1, v2, ray, t, u, v) &&
-    //            t < ray.tMax) {
-    //            ray.tMax = t;
-    //            data.uv[X] = u;
-    //            data.uv[Y] = v;
-    //            // data.index = k;
-    //            data.triangle = triangles[k];
-    //            intersect |= true;
-    //        }
-    //    }
-    //    return intersect;
-    //}
-    __device__ bool intersect(Ray &ray, SurfaceData &data) const {
-        return intersects(ray, data);
-        bool intersect = false;
-        for (int k = 0; k < triangleCnt; ++k) {
-            intersect |= rayTriangleIntersect(triangles[k], ray, data);
-        }
-        return intersect;
-    }
-
-    __device__ bool intersecta(Ray &ray, SurfaceData &surface) const {
+    __device__ bool intersect(Ray &ray, SurfaceData &surface) const {
         bool hit = false;
-
-        Vec3f invDir(1.0f / ray.dir[X], 1.0f / ray.dir[Y], 1.0f / ray.dir[Z]);
-        int dirIsNeg[3] = {invDir[X] < 0, invDir[Y] < 0, invDir[Z] < 0};
-
-        for (int j = 0; j < 7; ++j) {
-            /*const*/ LinearNode *node = &nodes[j];
-            if (node->bb.intersect(ray, invDir, dirIsNeg)) {
-                if (node->primtiveCnt == 0) {
-                    //hit = true;
-                    //surface.hitWhat = SurfaceData::BOUNDING_BOX;
-                    //surface.node = node;
-                } else {
-                    surface.nodesHit++;
-                    // leaf
-                    for (int i = 0; i < node->primtiveCnt; ++i) {
-                        Triangle tri = triangles[node->primitivesOffset + i];
-                        if (rayTriangleIntersect(tri, ray, surface)) {
-                            hit = true;
-                        }
-                    }
-                    // if (!hit) {
-                    //    hit = true;
-                    //    surface.hitWhat = SurfaceData::BOUNDING_BOX;
-                    //    surface.node = node;
-                    //}
-                }
-            }
-        }
-        return hit;
-    }
-
-    __device__ bool intersects(Ray &ray, SurfaceData &surface) const {
-        bool hit = false;
-
-        // for (int k = 0; k < triangleCnt; ++k) {
-        //    hit |= rayTriangleIntersect(triangles[k], ray, surface);
-        //}
-
         Vec3f invDir(1.0f / ray.dir[X], 1.0f / ray.dir[Y], 1.0f / ray.dir[Z]);
         int dirIsNeg[3] = {invDir[X] < 0, invDir[Y] < 0, invDir[Z] < 0};
 
@@ -172,10 +101,9 @@ class Mesh {
         int currentNodeIdx = 0;
         int nodesToVisit[64];
         while (true) {
-            /*const*/ LinearNode *node = &nodes[currentNodeIdx];
+            const LinearNode *node = &nodes[currentNodeIdx];
             if (node->bb.intersect(ray, invDir, dirIsNeg)) {
                 if (node->primtiveCnt > 0) {
-                    surface.nodesHit++;
                     // leaf
                     for (int i = 0; i < node->primtiveCnt; ++i) {
                         Triangle tri = triangles[node->primitivesOffset + i];
@@ -183,11 +111,6 @@ class Mesh {
                             hit = true;
                         }
                     }
-                    //if (!hit) {
-                    //    hit = true;
-                    //    surface.hitWhat = SurfaceData::BOUNDING_BOX;
-                    //    surface.node = node;
-                    //}
                     if (toVisitOffset == 0) {
                         break;
                     }
@@ -219,7 +142,6 @@ class Mesh {
         const Vec3f &v0 = vertices[triangle[0]].position;
         const Vec3f &v1 = vertices[triangle[1]].position;
         const Vec3f &v2 = vertices[triangle[2]].position;
-        // return rayTriangleIntersect(v0, v1, v2, ray, data);
         Vec3f edge1 = v1 - v0;
         Vec3f edge2 = v2 - v0;
         Vec3f pvec = ray.dir.cross(edge2);
@@ -244,34 +166,6 @@ class Mesh {
         data.uv[U] = u * invDet;
         data.uv[V] = v * invDet;
         data.triangle = triangle;
-        return true;
-    }
-
-    __device__ bool static rayTriangleIntersect(const Vec3f &v0,
-                                                const Vec3f &v1,
-                                                const Vec3f &v2, const Ray &ray,
-                                                float &tnear, float &u,
-                                                float &v) {
-        Vec3f edge1 = v1 - v0;
-        Vec3f edge2 = v2 - v0;
-        Vec3f pvec = ray.dir.cross(edge2);
-        float det = edge1.dot(pvec);
-        if (det == 0 || det < 0) return false;
-
-        Vec3f tvec = ray.origin - v0;
-        u = tvec.dot(pvec);
-
-        if (u < 0 || u > det) return false;
-
-        Vec3f qvec = tvec.cross(edge1);
-        v = ray.dir.dot(qvec);
-        if (v < 0 || u + v > det) return false;
-
-        float invDet = 1 / det;
-
-        tnear = edge2.dot(qvec) * invDet;
-        u *= invDet;
-        v *= invDet;
         return true;
     }
 };
