@@ -24,9 +24,9 @@ Vec3f Tracer::castRay(Ray &ray, int depth) {
         sd.st = sd.hit->getStCoords(sd.triangle, sd.uv);
         sd.n = sd.hit->getNormal(sd.hitPoint, sd.triangle, sd.uv, sd.st);
 
-        //return sd.n;
-        //return Vec3f(sd.st[X], sd.st[Y], 1.0f);
-        //return Vec3f(sd.uv[X], sd.uv[Y], 1.0f);
+        // return sd.n;
+        // return Vec3f(sd.st[X], sd.st[Y], 1.0f);
+        // return Vec3f(sd.uv[X], sd.uv[Y], 1.0f);
 
         Object::MaterialType materialType = sd.hit->getObject()->materialType;
         switch (materialType) {
@@ -205,8 +205,15 @@ Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
             powf(dotp, object->specularExponent) * g_scene.lights[i].intensity;
     }
 
-    // return Vec3f(st[Vec3f::X], st[Vec3f::Y], 255.0f);
     Vec3f diffuse = data.hit->evalDiffuseColor(data.st);
+    // return Vec3f(st[Vec3f::X], st[Vec3f::Y], 255.0f);
+    if (data.hitWhat == SurfaceData::BOUNDING_BOX) {
+        //diffuse = Vec3f(1.0f, 1.0f, 1.0f);
+        diffuse = Vec3f(/*data.node->axis / 2.0f*/ 1.0f,                //
+                        1.0f /*data.node->primitivesOffset / 500.0f*/ /*data.nodesHit/300.0f*/,  //
+            data.nodesHit / 5.0f);
+    }
+    return diffuse;
     hitColor = lightAmt * diffuse * object->Kd + specularColor * object->Ks;
     return hitColor;
 }

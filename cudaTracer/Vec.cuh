@@ -11,7 +11,8 @@ enum ST { S, T };
 
 template <typename T, int Size>
 class Vec {
-   private:
+   public:
+    //private:
     T data[Size];
 
    public:

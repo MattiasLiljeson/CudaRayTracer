@@ -18,6 +18,9 @@ void RayTracer::addDebugGuiStuff() {
     dg->setPosition("Rays", 220, 0);
     dg->setVisible("Rays", false);
 
+    dg->setSize("Options", 150, 100);
+    dg->setPosition("Options", 0, 75);
+
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE, "fov",
                &options.fov);
     dg->addVar("Options", DebugGUI::DG_INT, DebugGUI::READ_WRITE, "blockdim",

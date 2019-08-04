@@ -21,6 +21,10 @@ class Statistics : public Service {
         dg->setPosition("Mouse", 420, 0);
         dg->setVisible("Mouse", false);
 
+        
+        dg->setSize("Statistics", 150, 50);
+        dg->setPosition("Statistics", 0, 0);
+
         dg->addVar("Statistics", DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY, "dt",
                    &latestDt);
         dg->addVar("Statistics", DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY, "fps",

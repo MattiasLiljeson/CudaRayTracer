@@ -23,17 +23,19 @@ struct BoundingBox {
     Vec3f bbmax;
 
     __host__ BoundingBox()
-        : bbmin(Vec3f(0.0f, 0.0f, 0.0f)), bbmax(Vec3f(0.0f, 0.0f, 0.0f)) {}
+        : bbmin(Vec3f(FLT_MAX, FLT_MAX, FLT_MAX)),
+          bbmax(Vec3f(FLT_MIN, FLT_MIN, FLT_MIN)) {}
 
     __host__ BoundingBox(const Triangle& t, const std::vector<Vertex>& v) {
-        bbmin = FLT_MAX;
-        bbmax = FLT_MIN;
+        bbmin = Vec3f(FLT_MAX, FLT_MAX, FLT_MAX);
+        bbmax = Vec3f(FLT_MIN, FLT_MIN, FLT_MIN);
         for (int vertexIdx = 0; vertexIdx < 3; ++vertexIdx) {
-            Vec3f pos = v[t.i[vertexIdx]].position;
+            Vec3f pos = v[t[vertexIdx]].position;
             for (int axisIdx = 0; axisIdx < 3; ++axisIdx) {
                 if (pos[axisIdx] > bbmax[axisIdx]) {
                     bbmax[axisIdx] = pos[axisIdx];
-                } else if (pos[axisIdx] < bbmin[axisIdx]) {
+                }
+                if (pos[axisIdx] < bbmin[axisIdx]) {
                     bbmin[axisIdx] = pos[axisIdx];
                 }
             }
@@ -97,7 +99,7 @@ struct BoundingBox {
                 float tmp = tNear;
                 tNear = tFar;
                 tFar = tmp;
-                //swap(tNear, tFar);
+                // swap(tNear, tFar);
             }
             // Update tFar to ensure robust ray–bounds intersection
             t0 = tNear > t0 ? tNear : t0;

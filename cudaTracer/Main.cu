@@ -16,7 +16,7 @@ __device__ Scene g_scene;
 __global__ void kernel(unsigned char *surface, curandState *const rngStates);
 __device__ float randk(curandState *const localState);
 __global__ void cuke_initRNG(curandState *const rngStates,
-                             const unsigned int seed, int blkXIdx);
+                             const unsigned int seed/*, int blkXIdx*/);
 
 void cudamain(const Options &options, const Scene &scene, const void *surface,
               size_t pitch, int blockDim, unsigned char *rngStates) {
@@ -107,23 +107,30 @@ __device__ float randk(curandState *const localState) {
 unsigned char *cu_initCurand(int width, int height) {
     cudaError_t error = cudaSuccess;
 
-    dim3 block = dim3(16, 16);  // block dimensions are fixed to be 256 threads
-    dim3 grid =
-        dim3((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
+    //dim3 block = dim3(16, 16);  // block dimensions are fixed to be 256 threads
+    //dim3 grid =
+    //    dim3((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
+
+        dim3 threads = dim3(16, 16);
+    dim3 grids = dim3((width + threads.x - 1) / threads.x,
+                      (height + threads.y - 1) / threads.y);
 
     // init curand
     curandState *rngStates = NULL;
     cudaError_t cudaResult = cudaMalloc(
         (void **)&rngStates,
-        grid.x * block.x * /*grid.y * block.y **/ sizeof(curandState));
+        grids.x * threads.x * grids.y * threads.y * sizeof(curandState));
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 
     unsigned int seed = 1234;
 
-    for (int blkXIdx = 0; blkXIdx < grid.x; blkXIdx++) {
-        cuke_initRNG<<<dim3(1, grid.y), block>>>(rngStates, seed, blkXIdx);
-    }
+
+        //cuke_initRNG<<<grids, threads>>>(rngStates, seed/*, blkXIdx*/);
+
+    //for (int blkXIdx = 0; blkXIdx < grid.x; blkXIdx++) {
+    //    cuke_initRNG<<<dim3(1, grid.y), block>>>(rngStates, seed, blkXIdx);
+    //}
 
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -132,14 +139,19 @@ unsigned char *cu_initCurand(int width, int height) {
 }
 
 __global__ void cuke_initRNG(curandState *const rngStates,
-                             const unsigned int seed, int blkXIdx) {
+                             const unsigned int seed/*, int blkXIdx*/) {
     // Determine thread ID
+    //int x = threadIdx.x + blockIdx.x * blockDim.x;
+    //int y = threadIdx.y + blockIdx.y * blockDim.y;
     unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
-    int x = blkXIdx * blockDim.x + threadIdx.x;
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
     tid = x * gridDim.x + y;
+
+    tid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x +
+          threadIdx.x;
 
     // Initialise the RNG
     curand_init(seed, tid, 0, &rngStates[tid]);

@@ -6,6 +6,7 @@
 #include "GlobalCudaVector.h"
 #include "Mesh.cuh"
 #include "Model.h"
+#include "Popup.h"
 #include "Shape.cuh"
 #include "Texture.cuh"
 #include "Vertex.cuh"
@@ -33,10 +34,10 @@ class CudaMesh {
             tris.push_back(tri);
         }
         BVH::BvhFactory bvh(model.getVertices(), tris);
-        triangles = GlobalCudaVector<Triangle>::fromVector(tris);
+        triangles = GlobalCudaVector<Triangle>::fromVector(bvh.orderedPrims);
         generateTangents();
         nodes = GlobalCudaVector<LinearNode>::fromVector(bvh.nodes);
-        
+
         // TODO: 3 is just a happy guess
         int triCnt = model.getNumVertices() / 3;
 
@@ -71,7 +72,7 @@ class CudaMesh {
         return Texture(width, height, data->getDevMem());
     }
 
-    //CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
+    // CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
     //         int p_triCnt, std::vector<unsigned char> diffuseTexData,
     //         std::vector<unsigned char> bumpTexData, int texWidth,
     //         int texHeight) {
@@ -80,11 +81,12 @@ class CudaMesh {
     //    generateTangents();
     //    diffuseData =
     //        GlobalCudaVector<unsigned char>::fromVector(diffuseTexData);
-    //    normalsData = GlobalCudaVector<unsigned char>::fromVector(bumpTexData);
-    //    Texture diffuseTex =
+    //    normalsData = GlobalCudaVector<unsigned
+    //    char>::fromVector(bumpTexData); Texture diffuseTex =
     //        Texture(texWidth, texHeight, diffuseData.getDevMem());
-    //    Texture bumpTex = Texture(texWidth, texHeight, normalsData.getDevMem());
-    //    this->mesh = Mesh(this->indices.getDevMem(), p_triCnt,
+    //    Texture bumpTex = Texture(texWidth, texHeight,
+    //    normalsData.getDevMem()); this->mesh = Mesh(this->indices.getDevMem(),
+    //    p_triCnt,
     //                      this->vertices.getDevMem(), diffuseTex, bumpTex);
     //    shape = Shape(mesh);
     //    shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;

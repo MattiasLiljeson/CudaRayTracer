@@ -10,8 +10,8 @@ struct Triangle {
     __host__ __device__ Triangle(int i, int v[])
         : i{v[i], v[i + 1], v[i + 2]} {}
 
-    __device__ int& operator[](int idx) { return i[idx]; }
-    __device__ const int& operator[](int idx) const { return i[idx]; }
+    __host__ __device__ int& operator[](int idx) { return i[idx]; }
+    __host__ __device__ const int& operator[](int idx) const { return i[idx]; }
 };
 
 #endif

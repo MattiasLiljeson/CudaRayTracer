@@ -116,18 +116,52 @@ class Mesh {
     //    }
     //    return intersect;
     //}
-    //__device__ bool intersect(Ray &ray, SurfaceData &data) const {
-    //    bool intersect = false;
-    //    for (int k = 0; k < triangleCnt; ++k) {
-    //        intersect |= rayTriangleIntersect(triangles[k], ray, data);
-    //    }
-    //    return intersect;
-    //}
+    __device__ bool intersect(Ray &ray, SurfaceData &data) const {
+        return intersects(ray, data);
+        bool intersect = false;
+        for (int k = 0; k < triangleCnt; ++k) {
+            intersect |= rayTriangleIntersect(triangles[k], ray, data);
+        }
+        return intersect;
+    }
 
-    __device__ bool intersect(Ray &ray, SurfaceData &surface) const {
+    __device__ bool intersecta(Ray &ray, SurfaceData &surface) const {
         bool hit = false;
 
-        //for (int k = 0; k < triangleCnt; ++k) {
+        Vec3f invDir(1.0f / ray.dir[X], 1.0f / ray.dir[Y], 1.0f / ray.dir[Z]);
+        int dirIsNeg[3] = {invDir[X] < 0, invDir[Y] < 0, invDir[Z] < 0};
+
+        for (int j = 0; j < 7; ++j) {
+            /*const*/ LinearNode *node = &nodes[j];
+            if (node->bb.intersect(ray, invDir, dirIsNeg)) {
+                if (node->primtiveCnt == 0) {
+                    //hit = true;
+                    //surface.hitWhat = SurfaceData::BOUNDING_BOX;
+                    //surface.node = node;
+                } else {
+                    surface.nodesHit++;
+                    // leaf
+                    for (int i = 0; i < node->primtiveCnt; ++i) {
+                        Triangle tri = triangles[node->primitivesOffset + i];
+                        if (rayTriangleIntersect(tri, ray, surface)) {
+                            hit = true;
+                        }
+                    }
+                    // if (!hit) {
+                    //    hit = true;
+                    //    surface.hitWhat = SurfaceData::BOUNDING_BOX;
+                    //    surface.node = node;
+                    //}
+                }
+            }
+        }
+        return hit;
+    }
+
+    __device__ bool intersects(Ray &ray, SurfaceData &surface) const {
+        bool hit = false;
+
+        // for (int k = 0; k < triangleCnt; ++k) {
         //    hit |= rayTriangleIntersect(triangles[k], ray, surface);
         //}
 
@@ -138,10 +172,10 @@ class Mesh {
         int currentNodeIdx = 0;
         int nodesToVisit[64];
         while (true) {
-            const LinearNode *node = &nodes[currentNodeIdx];
+            /*const*/ LinearNode *node = &nodes[currentNodeIdx];
             if (node->bb.intersect(ray, invDir, dirIsNeg)) {
                 if (node->primtiveCnt > 0) {
-                    hit = true;
+                    surface.nodesHit++;
                     // leaf
                     for (int i = 0; i < node->primtiveCnt; ++i) {
                         Triangle tri = triangles[node->primitivesOffset + i];
@@ -149,6 +183,11 @@ class Mesh {
                             hit = true;
                         }
                     }
+                    //if (!hit) {
+                    //    hit = true;
+                    //    surface.hitWhat = SurfaceData::BOUNDING_BOX;
+                    //    surface.node = node;
+                    //}
                     if (toVisitOffset == 0) {
                         break;
                     }

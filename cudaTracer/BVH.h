@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <vector>
 #include "BoundingBox.cuh"
+#include "LinearNode.cuh"
 #include "Ray.cuh"
 #include "Vec.cuh"
 #include "Vertex.cuh"
-#include "LinearNode.cuh"
 
 using namespace vectorAxes;
 
@@ -17,7 +17,10 @@ struct PreNode {
     int triIdx;
     BoundingBox bb;
     Vec3f centroid;
-    PreNode() : triIdx(-1), centroid(Vec3f(-1.0f, -2.0f, -3.0f)) {}
+    PreNode()
+        : triIdx(-1),
+          centroid(Vec3f(-1.0f, -2.0f, -3.0f)),
+          bb(Vec3f(-10.0f, -20.0f, -30.0f), Vec3f(-1.0f, -2.0f, -3.0f)) {}
     PreNode(int i, BoundingBox bb)
         : triIdx(i), bb(bb), centroid(bb.centroid()) {}
 };
@@ -31,7 +34,7 @@ struct InterNode {
     enum NodeTypes { NOT_SET = -1, LEAF, INTERIOR };
     NodeTypes nodeType;
 
-    InterNode() : bb(Vec3f(0.0f, 0.0f, 0.0f), Vec3f(0.0f, 0.0f, 0.0f)) {
+    InterNode() {
         children[0] = nullptr;
         children[1] = nullptr;
         splitAxis = -1;
@@ -91,7 +94,7 @@ class BvhFactory {
         }
 
         int primCnt = end - start;
-        if (primCnt < 20) {
+        if (primCnt < 200) {
             leaf(bb, primCnt, start, end, node);
             return node;
         } else {
