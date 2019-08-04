@@ -7,6 +7,7 @@
 #include "Ray.cuh"
 #include "Vec.cuh"
 #include "Vertex.cuh"
+#include "LinearNode.cuh"
 
 using namespace vectorAxes;
 
@@ -42,7 +43,7 @@ struct InterNode {
     void leaf(int firstPrim, int primCnt, BoundingBox bb) {
         firstPrimOffset = firstPrim;
         primitiveCnt = primCnt;
-        bb = bb;
+        this->bb = bb;
         nodeType = LEAF;
     }
 
@@ -54,17 +55,6 @@ struct InterNode {
         primitiveCnt = primCnt;
         nodeType = INTERIOR;
     }
-};
-
-struct LinearNode {
-    BoundingBox bb;
-    union {
-        int primitivesOffset;   // leaf
-        int secondChildOffset;  // interior
-    };
-    uint16_t primtiveCnt;  // 0 -> interior node
-    uint8_t axis;          // interior node: xyz
-    uint8_t pad[1];        // ensure 32 byte total size
 };
 
 class BvhFactory {
@@ -101,7 +91,7 @@ class BvhFactory {
         }
 
         int primCnt = end - start;
-        if (primCnt == 1) {
+        if (primCnt < 20) {
             leaf(bb, primCnt, start, end, node);
             return node;
         } else {
@@ -170,76 +160,5 @@ class BvhFactory {
         return myOffset;
     }
 };
-
-struct SurfaceData {
-    // Todo: populate
-};
-
-struct inraytracer {
-    // TODO: move to cuda...
-    std::vector<LinearNode> nodes;
-    std::vector<Triangle> primitives;
-
-    bool intersect(const Ray& ray, SurfaceData* surface) {
-        bool hit = false;
-        Vec3f invDir(1 / ray.dir[X], 1 / ray.dir[Y], 1 / ray.dir[Z]);
-        int dirIsNeg[3] = {invDir[X] < 0, invDir[Y] < 0, invDir[Z] < 0};
-
-        int toVisitOffset = 0;
-        int currentNodeIdx = 0;
-        int nodesToVisit[64];
-        while (true) {
-            const LinearNode* node = &nodes[currentNodeIdx];
-            if (node->bb.intersect(ray, invDir, dirIsNeg)) {
-                if (node->primtiveCnt > 0) {
-                    // leaf
-                    for (int i = 0; i < node->primtiveCnt; ++i) {
-                        Triangle tri = primitives[node->primitivesOffset + i];
-                        if (intersect(tri, ray, surface)) {
-                            hit = true;
-                        }
-                    }
-                    if (toVisitOffset == 0) {
-                        break;
-                    }
-                    currentNodeIdx = nodesToVisit[--toVisitOffset];
-                } else {
-                    // inside node, put far node on stack, advance to near
-                    // check dir of ray so that nearest child is tested first
-                    if (dirIsNeg[node->axis]) {
-                        nodesToVisit[toVisitOffset++] = currentNodeIdx + 1;
-                        currentNodeIdx = node->secondChildOffset;
-                    } else {
-                        nodesToVisit[toVisitOffset++] = node->secondChildOffset;
-                        currentNodeIdx = currentNodeIdx + 1;
-                    }
-                }
-            } else {
-                if (toVisitOffset == 0) {
-                    break;
-                }
-                currentNodeIdx = nodesToVisit[--toVisitOffset];
-            }
-        }
-        return hit;
-    }
-
-    bool intersect(const Triangle& t, const Ray& ray, SurfaceData* sd) {
-        return true;
-        // TODO: move to cuda and implement...
-    }
-};
-
-// void createBVH() {
-//    // for each tri
-//    // find min, max,
-//    // collect centroids
-//    // find median
-//    // split-plane = longest min<->max-length among X,Y,Z
-//    // bvh.min = min
-//    // bvh.max = max
-//    // left = min <-> median.max
-//    // right = median.min <-> max
-//}
 }  // namespace BVH
 #endif

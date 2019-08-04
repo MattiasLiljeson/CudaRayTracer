@@ -144,8 +144,14 @@
     <ClInclude Include="main.cuh">
       <Filter>Cuda kernels</Filter>
     </ClInclude>
-    <ClInclude Include="SurfaceData.cuh">
+    <ClInclude Include="Triangle.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="SurfaceData.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="LinearNode.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -224,18 +230,20 @@
     <None Include="Mesh.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
-    <None Include="Vertex.cuh">
-      <Filter>Cuda kernels\Shapes</Filter>
-    </None>
     <None Include="Shape.cuh">
-      <Filter>Cuda kernels\Shapes</Filter>
-    </None>
-    <None Include="Texture.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </None>
     <None Include="BoundingBox.cuh">
       <Filter>Cuda kernels\Utils</Filter>
     </None>
-    <None Include="Ray.cuh" />
+    <None Include="Ray.cuh">
+      <Filter>Cuda kernels</Filter>
+    </None>
+    <None Include="Vertex.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
+    <None Include="Texture.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </None>
   </ItemGroup>
 </Project>

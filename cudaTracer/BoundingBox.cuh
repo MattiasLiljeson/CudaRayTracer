@@ -5,19 +5,11 @@
 #include <limits>
 #include <vector>
 #include "Ray.cuh"
+#include "Triangle.cuh"
 #include "Vec.cuh"
 #include "Vertex.cuh"
 
 using namespace vectorAxes;
-
-
-struct Triangle {
-    int i[3];
-    __host__ __device__ Triangle() : i{-1, -1, -1} {}
-    __host__ __device__ Triangle(int v0, int v1, int v2) : i{v0, v1, v2} {}
-    __host__ __device__ Triangle(int i, int v[])
-        : i{v[i], v[i + 1], v[i + 2]} {}
-};
 
 static constexpr float MachineEpsilon =
     std::numeric_limits<float>::epsilon() * 0.5;
@@ -33,8 +25,7 @@ struct BoundingBox {
     __host__ BoundingBox()
         : bbmin(Vec3f(0.0f, 0.0f, 0.0f)), bbmax(Vec3f(0.0f, 0.0f, 0.0f)) {}
 
-    __host__ BoundingBox(const Triangle& t,
-                                    const std::vector<Vertex>& v) {
+    __host__ BoundingBox(const Triangle& t, const std::vector<Vertex>& v) {
         bbmin = FLT_MAX;
         bbmax = FLT_MIN;
         for (int vertexIdx = 0; vertexIdx < 3; ++vertexIdx) {
@@ -52,8 +43,12 @@ struct BoundingBox {
     __host__ BoundingBox(const Vec3f& bbmin, const Vec3f& bbmax)
         : bbmin(bbmin), bbmax(bbmax) {}
 
-    __device__ const Vec3f& operator[](int i) const;
-    __device__ Vec3f& operator[](int i);
+    __host__ __device__ const Vec3f& operator[](int i) const {
+        return i == 0 ? bbmin : bbmax;
+    }
+    __host__ __device__ Vec3f& operator[](int i) {
+        return i == 0 ? bbmin : bbmax;
+    }
 
     __host__ Vec3f centroid() const { return (bbmin + bbmax) / 2.0f; }
 
@@ -88,7 +83,8 @@ struct BoundingBox {
                                  (std::max)(b.bbmax[Z], p[Z])));
     }
 
-    __device__ bool intersect(const Ray& ray, float* hitt0, float* hitt1) const {
+    __device__ bool intersect(const Ray& ray, float* hitt0,
+                              float* hitt1) const {
         float t0 = 0;
         float t1 = ray.tMax;
         for (int i = 0; i < 3; ++i) {
@@ -97,7 +93,12 @@ struct BoundingBox {
             float tNear = (bbmin[i] - ray.origin[i]) * invRayDir;
             float tFar = (bbmax[i] - ray.origin[i]) * invRayDir;
             // Update parametric interval from slab intersection values
-            if (tNear > tFar) std::swap(tNear, tFar);
+            if (tNear > tFar) {
+                float tmp = tNear;
+                tNear = tFar;
+                tFar = tmp;
+                //swap(tNear, tFar);
+            }
             // Update tFar to ensure robust ray–bounds intersection
             t0 = tNear > t0 ? tNear : t0;
             t1 = tFar < t1 ? tFar : t1;
@@ -110,8 +111,8 @@ struct BoundingBox {
         return true;
     }
 
-    __device__ inline bool intersect(const Ray& ray, const Vec3f& invDir,
-                          const int dirIsNeg[3]) const {
+    __device__ bool intersect(const Ray& ray, const Vec3f& invDir,
+                              const int dirIsNeg[3]) const {
         const BoundingBox& bounds = *this;
         // Check for ray intersection against  and  slabs
         float tMin = (bounds[dirIsNeg[0]][X] - ray.origin[X]) * invDir[X];

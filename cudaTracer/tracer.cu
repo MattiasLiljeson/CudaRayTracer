@@ -1,18 +1,16 @@
+#include <cuda_runtime.h>
+#include "BoundingBox.cuh"
 #include "Light.cuh"
 #include "Mat.cuh"
 #include "Options.cuh"
-#include "Sphere.cuh"
-#include "Vec.cuh"
-
-#include <cuda_runtime.h>
 #include "Scene.cuh"
+#include "Sphere.cuh"
 #include "Tracer.cuh"
+#include "Vec.cuh"
 #include "cuda.h"
 #include "cudaUtils.h"
 
 Tracer::Tracer(unsigned char *surface) : surface(surface) {}
-
-__device__ void fillSurfaceData(SurfaceData &data) {}
 
 Vec3f Tracer::castRay(Ray &ray, int depth) {
     if (depth > g_options.maxDepth) {
@@ -22,7 +20,13 @@ Vec3f Tracer::castRay(Ray &ray, int depth) {
     float tnear = INF;
     SurfaceData sd;
     if (trace(ray, sd)) {
-        fillSurfaceData(sd);
+        sd.hitPoint = ray();
+        sd.st = sd.hit->getStCoords(sd.triangle, sd.uv);
+        sd.n = sd.hit->getNormal(sd.hitPoint, sd.triangle, sd.uv, sd.st);
+
+        //return sd.n;
+        //return Vec3f(sd.st[X], sd.st[Y], 1.0f);
+        //return Vec3f(sd.uv[X], sd.uv[Y], 1.0f);
 
         Object::MaterialType materialType = sd.hit->getObject()->materialType;
         switch (materialType) {
@@ -47,13 +51,7 @@ bool Tracer::trace(Ray &ray, SurfaceData &data) {
             data.hit = &g_scene.shapes[k];
         }
     }
-    if (data.hit != nullptr) {
-        data.hitPoint = ray();
-        data.st = data.hit->getStCoords(data.index, data.uv);
-        data.n =
-            data.hit->getNormal(data.hitPoint, data.index, data.uv, data.st);
-    }
-    return (data.hit != nullptr);
+    return data.hit != nullptr;
 }
 
 __device__ float clamp(const float &lo, const float &hi, const float &v) {
@@ -208,7 +206,7 @@ Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
     }
 
     // return Vec3f(st[Vec3f::X], st[Vec3f::Y], 255.0f);
-    Vec3f diffuse = object->evalDiffuseColor(data.st);
+    Vec3f diffuse = data.hit->evalDiffuseColor(data.st);
     hitColor = lightAmt * diffuse * object->Kd + specularColor * object->Ks;
     return hitColor;
 }

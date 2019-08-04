@@ -19,16 +19,21 @@ class Vec {
 
     template <typename... Arg>
     __host__ __device__ constexpr Vec(const Arg&... args) : data{args...} {}
+    __host__ __device__ constexpr Vec(const T d[Size]) {
+        for (int i = 0; i < Size; ++i) {
+            data[i] = d[i];
+        }
+    }
 
-    __device__ constexpr Vec(const Vec& other) {
+    __host__ __device__ constexpr Vec(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] = other.data[i];
         }
     }
 
-    __device__ constexpr Vec() {}
+    __host__ __device__ constexpr Vec() {}
 
-    __device__ Vec operator*(const float& r) const {
+    __host__ __device__ Vec operator*(const float& r) const {
         Vec v(const_cast<Vec const&>(*this));
         for (T& d : v.data) {
             d *= r;
@@ -36,7 +41,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator*(const Vec& other) const {
+    __host__ __device__ Vec operator*(const Vec& other) const {
         Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] *= other.data[i];
@@ -44,7 +49,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator/(const float& r) const {
+    __host__ __device__ Vec operator/(const float& r) const {
         Vec v(const_cast<Vec const&>(*this));
         for (T& d : v.data) {
             d /= r;
@@ -52,7 +57,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator/(const Vec& other) const {
+    __host__ __device__ Vec operator/(const Vec& other) const {
         Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] /= other.data[i];
@@ -60,7 +65,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator-(const float& r) const {
+    __host__ __device__ Vec operator-(const float& r) const {
         Vec v(const_cast<Vec const&>(*this));
         for (T& d : v.data) {
             d -= r;
@@ -68,7 +73,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator-(const Vec& other) const {
+    __host__ __device__ Vec operator-(const Vec& other) const {
         Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] -= other.data[i];
@@ -76,7 +81,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator+(const float& r) const {
+    __host__ __device__ Vec operator+(const float& r) const {
         Vec v(const_cast<Vec const&>(*this));
         for (T& d : v.data) {
             d += r;
@@ -84,7 +89,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator+(const Vec& other) const {
+    __host__ __device__ Vec operator+(const Vec& other) const {
         Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] += other.data[i];
@@ -92,7 +97,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec operator-() const {
+    __host__ __device__ Vec operator-() const {
         Vec v(*this);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = -data[i];
@@ -100,88 +105,88 @@ class Vec {
         return v;
     }
 
-    __device__ Vec& operator+=(const float& r) {
+    __host__ __device__ Vec& operator+=(const float& r) {
         for (int i = 0; i < Size; ++i) {
             data[i] += r;
         }
         return *this;
     }
 
-    __device__ Vec& operator+=(const Vec& other) {
+    __host__ __device__ Vec& operator+=(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] += other.data[i];
         }
         return *this;
     }
 
-    __device__ Vec& operator-=(const float& r) {
+    __host__ __device__ Vec& operator-=(const float& r) {
         for (int i = 0; i < Size; ++i) {
             data[i] -= r;
         }
         return *this;
     }
 
-    __device__ Vec& operator-=(const Vec& other) {
+    __host__ __device__ Vec& operator-=(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] -= other.data[i];
         }
         return *this;
     }
 
-    __device__ Vec& operator*=(const float& r) {
+    __host__ __device__ Vec& operator*=(const float& r) {
         for (int i = 0; i < Size; ++i) {
             data[i] *= r;
         }
         return *this;
     }
 
-    __device__ Vec& operator*=(const Vec& other) {
+    __host__ __device__ Vec& operator*=(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] *= other.data[i];
         }
         return *this;
     }
 
-    __device__ Vec& operator/=(const float& r) {
+    __host__ __device__ Vec& operator/=(const float& r) {
         for (int i = 0; i < Size; ++i) {
             data[i] /= r;
         }
         return *this;
     }
 
-    __device__ Vec& operator/=(const Vec& other) {
+    __host__ __device__ Vec& operator/=(const Vec& other) {
         for (int i = 0; i < Size; ++i) {
             data[i] /= other.data[i];
         }
         return *this;
     }
 
-    __device__ T& operator[](int idx) { return data[idx]; }
+    __host__ __device__ T& operator[](int idx) { return data[idx]; }
 
-    __device__ const T& operator[](int idx) const { return data[idx]; }
+    __host__ __device__ const T& operator[](int idx) const { return data[idx]; }
 
-    __device__ friend Vec operator+(const float& r, const Vec& other) {
+    __host__ __device__ friend Vec operator+(const float& r, const Vec& other) {
         Vec v(other);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = other.data[i] + r;
         }
         return v;
     }
-    __device__ friend Vec operator-(const float& r, const Vec& other) {
+    __host__ __device__ friend Vec operator-(const float& r, const Vec& other) {
         Vec v(other);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = other.data[i] - r;
         }
         return v;
     }
-    __device__ friend Vec operator*(const float& r, const Vec& other) {
+    __host__ __device__ friend Vec operator*(const float& r, const Vec& other) {
         Vec v(other);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = other.data[i] * r;
         }
         return v;
     }
-    __device__ friend Vec operator/(const float& r, const Vec& other) {
+    __host__ __device__ friend Vec operator/(const float& r, const Vec& other) {
         Vec v(other);
         for (int i = 0; i < Size; ++i) {
             v.data[i] = other.data[i] / r;
@@ -189,7 +194,7 @@ class Vec {
         return v;
     }
 
-    __device__ __host__ friend bool operator==(const Vec& lhs, const Vec& rhs) {
+    __host__ __device__ friend bool operator==(const Vec& lhs, const Vec& rhs) {
         for (int i = 0; i < Size; ++i) {
             if (lhs[i] != rhs[i]) {
                 return false;
@@ -198,11 +203,11 @@ class Vec {
         return true;
     }
 
-    __device__ __host__ friend bool operator!=(const Vec& lhs, const Vec& rhs) {
+    __host__ __device__ friend bool operator!=(const Vec& lhs, const Vec& rhs) {
         return !(lhs == rhs);
     }
 
-    __device__ float magnitude() const {
+    __host__ __device__ float magnitude() const {
         float mag2 = 0.0f;
         for (int i = 0; i < Size; ++i) {
             mag2 += data[i] * data[i];
@@ -210,7 +215,7 @@ class Vec {
         return sqrtf(mag2);
     }
 
-    __device__ Vec normalized() const {
+    __host__ __device__ Vec normalized() const {
         float mag2 = 0.0f;
         for (int i = 0; i < Size; ++i) {
             mag2 += data[i] * data[i];
@@ -222,7 +227,7 @@ class Vec {
         return Vec(*this);
     }
 
-    __device__ T dot(const Vec& other) const {
+    __host__ __device__ T dot(const Vec& other) const {
         T sum = 0;
         for (int i = 0; i < Size; ++i) {
             sum += data[i] * other.data[i];
@@ -230,7 +235,7 @@ class Vec {
         return sum;
     }
 
-    __device__ Vec cross(const Vec& other) const {
+    __host__ __device__ Vec cross(const Vec& other) const {
         assert(Size == 3);  // only valid for 3d space
         Vec v;
         v[X] = data[Y] * other[Z] - data[Z] * other[Y];
@@ -239,7 +244,7 @@ class Vec {
         return v;
     }
 
-    __device__ Vec reflect(const Vec& N) const {
+    __host__ __device__ Vec reflect(const Vec& N) const {
         return *this - N * 2 * dot(N);
     }
 

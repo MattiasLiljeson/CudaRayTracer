@@ -36,22 +36,23 @@ struct Shape {
         this->mesh = mesh;
     }
 
-    __device__ Vec2f getStCoords(const int &index, const Vec2f &uv) const {
+    __device__ Vec2f getStCoords(const Triangle &triangle,
+                                 const Vec2f &uv) const {
         if (kind == Shape::SPHERE) {
             // Could use some standard sphere mapping instead...
             return Vec2f(1.0f, 1.0f);
         } else if (kind == Shape::MESH) {
-            return mesh.getStCoords(index, uv);
+            return mesh.getStCoords(triangle, uv);
         }
         // Famous words, should never happen :D
         return Vec2f(1.0f, 1.0f);
     }
-    __device__ Vec3f getNormal(const Vec3f &P, const int &index,
+    __device__ Vec3f getNormal(const Vec3f &P, const Triangle &triangle,
                                const Vec2f &uv, const Vec2f &st) const {
         if (kind == Shape::SPHERE) {
             return sphere.getNormal(P);
         } else if (kind == Shape::MESH) {
-            return mesh.getNormal(index, uv, st);
+            return mesh.getNormal(triangle, uv, st);
         }
     }
 

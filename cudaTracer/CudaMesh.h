@@ -14,6 +14,8 @@ class CudaMesh {
    public:
     GlobalCudaVector<Vertex> vertices;
     GlobalCudaVector<int> indices;
+    GlobalCudaVector<Triangle> triangles;
+    GlobalCudaVector<LinearNode> nodes;
     GlobalCudaVector<unsigned char> diffuseData;
     GlobalCudaVector<unsigned char> normalsData;
     Mesh mesh;
@@ -22,15 +24,19 @@ class CudaMesh {
     CudaMesh(const Model &model) {
         vertices = GlobalCudaVector<Vertex>::fromVector(model.getVertices());
         indices = GlobalCudaVector<int>::fromVector(model.getIndices());
-        generateTangents();
 
         std::vector<Triangle> tris;
-        for (int i = 0; i < indices.size(); i += 3) {
-            Triangle tri(indices[i], indices[i + 1], indices[i + 2]);
+        for (int i = 0; i < model.getIndices().size(); i += 3) {
+            Triangle tri(model.getIndices()[i],      //
+                         model.getIndices()[i + 1],  //
+                         model.getIndices()[i + 2]);
             tris.push_back(tri);
         }
         BVH::BvhFactory bvh(model.getVertices(), tris);
-
+        triangles = GlobalCudaVector<Triangle>::fromVector(tris);
+        generateTangents();
+        nodes = GlobalCudaVector<LinearNode>::fromVector(bvh.nodes);
+        
         // TODO: 3 is just a happy guess
         int triCnt = model.getNumVertices() / 3;
 
@@ -39,8 +45,8 @@ class CudaMesh {
         std::string normalsFname = model.getMaterials()[0].normalMapPath;
         Texture normalsTex = loadPngFromDisk(normalsFname, &normalsData);
 
-        mesh = Mesh(indices.getDevMem(), triCnt, vertices.getDevMem(),
-                    diffuseTex, normalsTex);
+        mesh = Mesh(triangles.getDevMem(), triCnt, vertices.getDevMem(),
+                    diffuseTex, normalsTex, nodes.getDevMem());
         shape = Shape(mesh);
         shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;
     }
@@ -65,35 +71,35 @@ class CudaMesh {
         return Texture(width, height, data->getDevMem());
     }
 
-    CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
-             int p_triCnt, std::vector<unsigned char> diffuseTexData,
-             std::vector<unsigned char> bumpTexData, int texWidth,
-             int texHeight) {
-        this->vertices = GlobalCudaVector<Vertex>::fromVector(vertices);
-        this->indices = GlobalCudaVector<int>::fromVector(indices);
-        generateTangents();
-        diffuseData =
-            GlobalCudaVector<unsigned char>::fromVector(diffuseTexData);
-        normalsData = GlobalCudaVector<unsigned char>::fromVector(bumpTexData);
-        Texture diffuseTex =
-            Texture(texWidth, texHeight, diffuseData.getDevMem());
-        Texture bumpTex = Texture(texWidth, texHeight, normalsData.getDevMem());
-        this->mesh = Mesh(this->indices.getDevMem(), p_triCnt,
-                          this->vertices.getDevMem(), diffuseTex, bumpTex);
-        shape = Shape(mesh);
-        shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;
-    }
+    //CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
+    //         int p_triCnt, std::vector<unsigned char> diffuseTexData,
+    //         std::vector<unsigned char> bumpTexData, int texWidth,
+    //         int texHeight) {
+    //    this->vertices = GlobalCudaVector<Vertex>::fromVector(vertices);
+    //    this->indices = GlobalCudaVector<int>::fromVector(indices);
+    //    generateTangents();
+    //    diffuseData =
+    //        GlobalCudaVector<unsigned char>::fromVector(diffuseTexData);
+    //    normalsData = GlobalCudaVector<unsigned char>::fromVector(bumpTexData);
+    //    Texture diffuseTex =
+    //        Texture(texWidth, texHeight, diffuseData.getDevMem());
+    //    Texture bumpTex = Texture(texWidth, texHeight, normalsData.getDevMem());
+    //    this->mesh = Mesh(this->indices.getDevMem(), p_triCnt,
+    //                      this->vertices.getDevMem(), diffuseTex, bumpTex);
+    //    shape = Shape(mesh);
+    //    shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;
+    //}
 
     void CudaMesh::generateTangents() {
         // Create and set tangent and bitangent
         Vec3f tangent;
         Vec3f bitangent;
-        int faceCnt = (int)indices.size() / 3;
+        int faceCnt = (int)triangles.size();
         for (int i = 0; i < faceCnt; ++i) {
             // Vertex indices used when fetching vertices
-            int i1 = indices[3 * i];
-            int i2 = indices[3 * i + 1];
-            int i3 = indices[3 * i + 2];
+            int i1 = triangles[i][0];
+            int i2 = triangles[i][1];
+            int i3 = triangles[i][2];
 
             calcFaceTangentAndBitangent(vertices[i1],  //
                                         vertices[i2],  //
