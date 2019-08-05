@@ -20,6 +20,7 @@ class Vec {
 
     template <typename... Arg>
     __host__ __device__ constexpr Vec(const Arg&... args) : data{args...} {}
+
     __host__ __device__ constexpr Vec(const T d[Size]) {
         for (int i = 0; i < Size; ++i) {
             data[i] = d[i];

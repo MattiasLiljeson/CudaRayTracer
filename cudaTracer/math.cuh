@@ -74,7 +74,7 @@ class Math {
         }
         float eta = etai / etat;
         float k = 1 - eta * eta * (1 - cosi * cosi);
-        return k < 0 ? 0 : eta * I + (eta * cosi - sqrtf(k)) * n;
+        return k < 0 ? Vec3f(0.0f, 0.0f, 0.0f) :  I * eta + (eta * cosi - sqrtf(k)) * n;
     }
 };
 
