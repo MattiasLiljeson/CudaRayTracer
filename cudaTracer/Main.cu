@@ -126,7 +126,7 @@ unsigned char *cu_initCurand(int width, int height) {
     unsigned int seed = 1234;
 
 
-        //cuke_initRNG<<<grids, threads>>>(rngStates, seed/*, blkXIdx*/);
+        cuke_initRNG<<<grids, threads>>>(rngStates, seed/*, blkXIdx*/);
 
     //for (int blkXIdx = 0; blkXIdx < grid.x; blkXIdx++) {
     //    cuke_initRNG<<<dim3(1, grid.y), block>>>(rngStates, seed, blkXIdx);

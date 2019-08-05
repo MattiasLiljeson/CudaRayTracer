@@ -77,8 +77,9 @@ void RayTracer::addSpheres() {
     }
 
     Shape mirrorBall = Shape(Sphere(Vec3f(1.0f, 1.0f, 3.0f), 1.0f));
+    mirrorBall.material.ior = 64;
     mirrorBall.material.materialType = Object::REFLECTION;
-    mirrorBall.material.diffuseColor = Vec3f(0.6f, 0.7f, 0.8f);
+    mirrorBall.material.diffuseColor = Vec3f(0.722f, 0.451f, 0.2f);
     shapes.add(mirrorBall);
 
     Shape glassBall = Shape(Sphere(Vec3f(0.5f, -1.5f, 4.5f), 1.5f));
@@ -89,7 +90,7 @@ void RayTracer::addSpheres() {
 }
 
 void RayTracer::addPlane() {
-    float planeSize = 10.0f;
+    float planeSize = 100.0f;
     std::vector<Vertex> vertices{
         Vertex(Vec3f(-planeSize, -10.0f, planeSize), Vec2f(0.0f, 0.0f)),  //
         Vertex(Vec3f(planeSize, -10.0f, planeSize), Vec2f(1.0f, 0.0f)),   //
@@ -104,14 +105,15 @@ void RayTracer::addPlane() {
                                        128, 128, 255, 255,  //
                                        128, 128, 255, 255,  //
                                        128, 128, 255, 255};
-    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2);
+    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2,
+                          Object::DIFFUSE_AND_GLOSSY);
     shapes.add(plane.shape);
 }
 
 void RayTracer::addMesh() {
     Model barrelModel = ObjFileReader().readFile(
         "../assets/models/plasticBarrel/", "plastic_barrel.obj", false)[0];
-    static CudaMesh barrel(barrelModel);
+    static CudaMesh barrel(barrelModel, Object::DIFFUSE_AND_GLOSSY);
     shapes.add(barrel.shape);
 }
 
@@ -184,7 +186,7 @@ void RayTracer::handleInput(float p_dt) {
 }
 
 void RayTracer::updateLights(float p_dt) {
-    Mat44f rotY = Mat44f::rotationY(p_dt * 100);
+    Mat44f rotY = Mat44f::rotationY(p_dt * 10);
     // update lights
     for (int i = 0; i < lights.size(); ++i) {
         Vec3f tmp = lights[i].position;

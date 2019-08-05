@@ -26,7 +26,7 @@ class CudaMesh {
     CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
              int p_triCnt, std::vector<unsigned char> diffuseAsChars,
              std::vector<unsigned char> normalsAsChars, int texWidth,
-             int texHeight) {
+             int texHeight, Object::MaterialType material) {
         prepareGeometry(vertices, indices);
 
         diffuseData =
@@ -36,10 +36,10 @@ class CudaMesh {
         Texture diffuse = Texture(texWidth, texHeight, diffuseData.getDevMem());
         Texture normals = Texture(texWidth, texHeight, normalsData.getDevMem());
 
-        createShape(diffuse, normals);
+        createShape(diffuse, normals, material);
     }
 
-    CudaMesh(const Model &model) {
+    CudaMesh(const Model &model, Object::MaterialType material) {
         prepareGeometry(model.getVertices(), model.getIndices());
 
         std::string diffuseFname = model.getMaterials()[0].texturePath;
@@ -47,7 +47,7 @@ class CudaMesh {
         std::string normalsFname = model.getMaterials()[0].normalMapPath;
         Texture normals = loadPngFromDisk(normalsFname, &normalsData);
 
-        createShape(diffuse, normals);
+        createShape(diffuse, normals, material);
     }
 
     void prepareGeometry(std::vector<Vertex> vertices,
@@ -67,11 +67,12 @@ class CudaMesh {
         nodes = GlobalCudaVector<LinearNode>::fromVector(bvh.nodes);
     }
 
-    void createShape(Texture diffuse, Texture normals) {
+    void createShape(Texture diffuse, Texture normals,
+                     Object::MaterialType material) {
         mesh = Mesh(triangles.getDevMem(), triangles.size(),
                     vertices.getDevMem(), diffuse, normals, nodes.getDevMem());
         shape = Shape(mesh);
-        shape.material.materialType = Object::DIFFUSE_AND_GLOSSY;
+        shape.material.materialType = material;
     }
 
     static Texture CudaMesh::loadPngFromDisk(
