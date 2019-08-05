@@ -140,14 +140,49 @@ Vec3f Tracer::reflection(const Vec3f &dir, SurfaceData &data, const int depth) {
     return reflectionColor * kr;
 }
 
+
+__device__ float blinnPhong(const Vec3f &dir, const SurfaceData &surface,
+                            const Vec3f &lightDir, const float &shininess) {
+    Vec3f halfDir = (lightDir + dir).normalized();
+    float specAngle = fmax(halfDir.dot(surface.n), 0.0f);
+    return pow(specAngle, shininess);
+}
+
+__device__ float phong(const Vec3f &dir, const SurfaceData &surface,
+                       const Vec3f &lightDir, const float &shininess) {
+    Vec3f reflectDir = -lightDir.reflect(surface.n);
+    float specAngle = fmax(reflectDir.dot(dir), 0.0f);
+    // note that the exponent is different here
+    return powf(specAngle, shininess / 4.0f);
+}
+
+__device__ Vec3f shade(const Vec3f &dir, const SurfaceData &surface,
+                       const Light &light, const Vec3f &diffuseColor,
+                       const Vec3f &specColor, const Vec3f &lightDir,
+                       const float &distance) {
+     float lambertian = fmax(lightDir.dot(surface.n), 0.0f);
+     float specular = 0.0f;
+
+     if (lambertian > 0.0f) {
+        specular =
+            blinnPhong(dir, surface, lightDir, 1.0f /*surface.shininess*/);
+    }
+     Vec3f lightColor = light.intensity;
+     Vec3f diffuseComponent =
+        diffuseColor * lambertian * lightColor * light.lightPower / distance;
+     Vec3f specComponent =
+        specColor * specular * lightColor * light.lightPower / distance;
+     return diffuseComponent + specComponent;
+}
+
 /**
  * Calcualte diffuse and glossy using Phong
  */
 Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
                                const int depth) {
     const Material *object = data.hit->getObject();
-    Vec3f diffuse = Vec3f(0.0f, 0.0f, 0.0f);
-    Vec3f specular = Vec3f(0.f, 0.0f, 0.0f);
+    Vec3f diffuse = data.hit->evalDiffuseColor(data.st);
+    Vec3f final = Vec3f(0.0f, 0.0f, 0.0f);
     Vec3f shadowPointOrig = biasedOrigin(dir, data);
     for (int i = 0; i < g_scene.lightCnt; ++i) {
         Vec3f lightDir = g_scene.lights[i].position - data.hitPoint;
@@ -157,16 +192,43 @@ Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
 
         Ray shadowRay(shadowPointOrig, lightDir, lightDistance);
         bool visible = !trace(shadowRay, SurfaceData());
-        const Vec3f intensity = g_scene.lights[i].intensity;
-        diffuse += intensity * lambert * visible;
 
-        Vec3f reflectionDirection = (-lightDir).reflect(data.n);
-        float dotp = fmaxf(0.f, -reflectionDirection.dot(dir));
-        specular += powf(dotp, object->specularExponent) * intensity * visible;
+        if (visible) {
+            final += shade(dir, data, g_scene.lights[i], diffuse, diffuse,
+                           lightDir, lightDistance);
+        }
+
+
+
+
+
+        
+    //// apply gamma correction (assume ambientColor, diffuseColor and
+        //// specColor have been linearized, i.e. have no gamma correction in
+        //// them)
+        // const float screenGamma = 2.2;
+        // Vec3f colorGammaCorrected;
+        // colorGammaCorrected[X] = powf(colorLinear[X], 1.0f / screenGamma);
+        // colorGammaCorrected[Y] = powf(colorLinear[Y], 1.0f / screenGamma);
+        // colorGammaCorrected[Z] = powf(colorLinear[Z], 1.0f / screenGamma);
+        //// use the gamma corrected color in the fragment
+        // return colorGammaCorrected;
+
+
+
+
+
+
+
+        // float lambert = fmaxf(0.f, lightDir.dot(data.n));
+
+        // const Vec3f intensity = g_scene.lights[i].intensity;
+        // diffuse += intensity * lambert * visible;
+
+
     }
 
-    Vec3f albedo = data.hit->evalDiffuseColor(data.st);
-    return diffuse * albedo * object->Kd + specular * object->Ks;
+    return final;
 }
 
 Vec3f Tracer::biasedOrigin(const Vec3f &direction, const SurfaceData &data) {
