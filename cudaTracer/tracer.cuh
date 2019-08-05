@@ -31,5 +31,11 @@ class Tracer {
                                 const int depth);
     __device__ Vec3f diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
                                       const int depth);
+
+   private:
+    __device__ Vec3f biasedOrigin(const Vec3f &direction,
+                                  const SurfaceData &data);
+    __device__ Vec3f invBiasedOrigin(const Vec3f &direction,
+                                  const SurfaceData &data);
 };
 #endif

@@ -62,16 +62,20 @@ void RayTracer::addLights() {
 
 void RayTracer::addSpheres() {
     const int sphereCntSqrt = 5;
+    const float dist = 3.0f;
     float scale = 1.0f / sphereCntSqrt;
     for (int i = 0; i < sphereCntSqrt; ++i) {
         for (int j = 0; j < sphereCntSqrt; ++j) {
             // int idx = i * sphereCntSqrt + j;
             // std::cerr << idx << std::endl;
-            float x = -sphereCntSqrt + i * 2.0f;
-            float z = -sphereCntSqrt + j * 2.0f;
+            float x = -sphereCntSqrt*dist*0.5f + i * dist;
+            float z = -sphereCntSqrt*dist*0.5f + j * dist;
             Shape s = Shape(Sphere(Vec3f(x, -4.0f, z), 1.0f));
             s.material.materialType = Material::DIFFUSE_AND_GLOSSY;
             s.material.diffuseColor = Vec3f(x * scale, 0.1f, z * scale);
+            s.material.Kd = 0.8;
+            s.material.Ks = scale * i * scale * j* 0.8f + 0.1f;
+            s.material.specularExponent = i * j * 100 + 1;
             shapes.add(s);
         }
     }
@@ -97,23 +101,27 @@ void RayTracer::addPlane() {
         Vertex(Vec3f(planeSize, -10.0f, -planeSize), Vec2f(1.0f, 1.0f)),  //
         Vertex(Vec3f(-planeSize, -10.0f, -planeSize), Vec2f(0.0f, 1.0f))};
     std::vector<int> indices{0, 1, 3, 1, 2, 3};
-    std::vector<unsigned char> diffuseData{0, 0, 255, 255,  //
-                                       100, 0, 255, 255,  //
-                                       100, 100, 255, 255,  //
-                                       0, 100, 255, 255};
+    std::vector<unsigned char> diffuseData{0,   0,   255, 255,  //
+                                           100, 0,   255, 255,  //
+                                           100, 100, 255, 255,  //
+                                           0,   100, 255, 255};
     std::vector<unsigned char> bumpdata{128, 128, 255, 255,  //
-                                       128, 128, 255, 255,  //
-                                       128, 128, 255, 255,  //
-                                       128, 128, 255, 255};
-    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2,
-                          Material::DIFFUSE_AND_GLOSSY);
+                                        128, 128, 255, 255,  //
+                                        128, 128, 255, 255,  //
+                                        128, 128, 255, 255};
+    Material m;
+    m.materialType = Material::DIFFUSE_AND_GLOSSY;
+    m.ior = 4;
+    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2, m);
     shapes.add(plane.shape);
 }
 
 void RayTracer::addMesh() {
+    Material m;
+    m.materialType = Material::DIFFUSE_AND_GLOSSY;
     model::Model barrelModel = ObjFileReader().readFile(
         "../assets/models/plasticBarrel/", "plastic_barrel.obj", false)[0];
-    static CudaMesh barrel(barrelModel, Material::DIFFUSE_AND_GLOSSY);
+    static CudaMesh barrel(barrelModel, m);
     shapes.add(barrel.shape);
 }
 

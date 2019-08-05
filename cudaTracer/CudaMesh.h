@@ -26,7 +26,7 @@ class CudaMesh {
     CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
              int p_triCnt, std::vector<unsigned char> diffuseAsChars,
              std::vector<unsigned char> normalsAsChars, int texWidth,
-             int texHeight, Material::Type material) {
+             int texHeight, Material material) {
         prepareGeometry(vertices, indices);
 
         diffuseData =
@@ -39,7 +39,7 @@ class CudaMesh {
         createShape(diffuse, normals, material);
     }
 
-    CudaMesh(const model::Model &model, Material::Type material) {
+    CudaMesh(const model::Model &model, Material material) {
         prepareGeometry(model.getVertices(), model.getIndices());
 
         std::string diffuseFname = model.getMaterials()[0].texturePath;
@@ -68,11 +68,11 @@ class CudaMesh {
     }
 
     void createShape(Texture diffuse, Texture normals,
-                     Material::Type material) {
+                     Material material) {
         mesh = Mesh(triangles.getDevMem(), triangles.size(),
                     vertices.getDevMem(), diffuse, normals, nodes.getDevMem());
         shape = Shape(mesh);
-        shape.material.materialType = material;
+        shape.material = material;
     }
 
     static Texture CudaMesh::loadPngFromDisk(

@@ -137,6 +137,7 @@ class Mesh {
         return hit;
     }
 
+    // Moller-Trumbore ray-triangle intersection algorithm
     __device__ bool rayTriangleIntersect(const Triangle &triangle, Ray &ray,
                                          SurfaceData &data) const {
         const Vec3f &v0 = vertices[triangle[0]].position;
