@@ -156,6 +156,9 @@
     <ClInclude Include="Material.cuh">
       <Filter>Cuda kernels\Shapes</Filter>
     </ClInclude>
+    <ClInclude Include="math.cuh">
+      <Filter>Cuda kernels\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
