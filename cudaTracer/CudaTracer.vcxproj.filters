@@ -153,6 +153,9 @@
     <ClInclude Include="LinearNode.cuh">
       <Filter>Cuda kernels\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Material.cuh">
+      <Filter>Cuda kernels\Shapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -217,9 +220,6 @@
     </None>
     <None Include="Mat.cuh">
       <Filter>Cuda kernels\Utils</Filter>
-    </None>
-    <None Include="Object.cuh">
-      <Filter>Cuda kernels\Shapes</Filter>
     </None>
     <None Include="Sphere.cuh">
       <Filter>Cuda kernels\Shapes</Filter>

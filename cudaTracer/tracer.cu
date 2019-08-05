@@ -24,13 +24,13 @@ Vec3f Tracer::castRay(Ray &ray, int depth) {
         sd.st = sd.hit->getStCoords(sd.triangle, sd.uv);
         sd.n = sd.hit->getNormal(sd.hitPoint, sd.triangle, sd.uv, sd.st);
 
-        Object::MaterialType materialType = sd.hit->getObject()->materialType;
+        Material::Type materialType = sd.hit->getObject()->materialType;
         switch (materialType) {
-            case Object::REFLECTION_AND_REFRACTION:
+            case Material::REFLECTION_AND_REFRACTION:
                 return reflectionAndRefraction(ray.dir, sd, depth);
-            case Object::REFLECTION:
+            case Material::REFLECTION:
                 return reflection(ray.dir, sd, depth);
-            case Object::DIFFUSE_AND_GLOSSY:
+            case Material::DIFFUSE_AND_GLOSSY:
                 return diffuseAndGlossy(ray.dir, sd, depth);
             default:
                 return Vec3f(1.0f, 0.5f, 0.25f);
@@ -124,7 +124,7 @@ __device__ Vec3f refract(const Vec3f &I, const Vec3f &N, const float &ior) {
 
 Vec3f Tracer::reflectionAndRefraction(const Vec3f &dir, SurfaceData &data,
                                       const int depth) {
-    const Object *object = data.hit->getObject();
+    const Material *object = data.hit->getObject();
     Vec3f hitColor = g_options.backgroundColor;
     Vec3f reflectionDirection = data.n.reflect(dir).normalized();
     Vec3f refractionDirection = refract(dir, data.n, object->ior).normalized();
@@ -162,7 +162,7 @@ Vec3f Tracer::reflection(const Vec3f &dir, SurfaceData &data, const int depth) {
 
 Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
                                const int depth) {
-    const Object *object = data.hit->getObject();
+    const Material *object = data.hit->getObject();
 
     Vec3f hitColor = g_options.backgroundColor;
     // [comment]

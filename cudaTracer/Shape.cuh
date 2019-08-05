@@ -12,7 +12,7 @@ struct Shape {
         Sphere sphere;
         Mesh mesh;
     };
-    Object material;
+    Material material;
 
     __device__ Shape() { kind = NOT_SET; }
 
@@ -56,7 +56,7 @@ struct Shape {
         }
     }
 
-    __device__ const Object *getObject() const { return &material; }
+    __device__ const Material *getObject() const { return &material; }
 
     __device__ Vec3f evalDiffuseColor(const Vec2f &st) const {
         if (kind == Shape::SPHERE) {

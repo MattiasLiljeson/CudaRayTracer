@@ -3,7 +3,7 @@
 
 #include <cuda_runtime.h>
 #include "LinearNode.cuh"
-#include "Object.cuh"
+#include "Material.cuh"
 #include "Ray.cuh"
 #include "SurfaceData.cuh"
 #include "Texture.cuh"

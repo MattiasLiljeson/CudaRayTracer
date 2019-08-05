@@ -6,7 +6,7 @@
 
 //#include "Utils.h"
 #include "Vertex.cuh"
-
+namespace model {
 struct ObbFromFile {
     bool defined;
     enum { X, Y, Z };
@@ -72,5 +72,5 @@ class Model {
     int getNumIndices() const;
     bool getUseBlendMap() const;
 };
-
+}  // namespace Model
 #endif  // MODEL_H

@@ -70,7 +70,7 @@ void RayTracer::addSpheres() {
             float x = -sphereCntSqrt + i * 2.0f;
             float z = -sphereCntSqrt + j * 2.0f;
             Shape s = Shape(Sphere(Vec3f(x, -4.0f, z), 1.0f));
-            s.material.materialType = Object::DIFFUSE_AND_GLOSSY;
+            s.material.materialType = Material::DIFFUSE_AND_GLOSSY;
             s.material.diffuseColor = Vec3f(x * scale, 0.1f, z * scale);
             shapes.add(s);
         }
@@ -78,13 +78,13 @@ void RayTracer::addSpheres() {
 
     Shape mirrorBall = Shape(Sphere(Vec3f(1.0f, 1.0f, 3.0f), 1.0f));
     mirrorBall.material.ior = 64;
-    mirrorBall.material.materialType = Object::REFLECTION;
+    mirrorBall.material.materialType = Material::REFLECTION;
     mirrorBall.material.diffuseColor = Vec3f(0.722f, 0.451f, 0.2f);
     shapes.add(mirrorBall);
 
     Shape glassBall = Shape(Sphere(Vec3f(0.5f, -1.5f, 4.5f), 1.5f));
     glassBall.material.ior = 1.5f;
-    glassBall.material.materialType = Object::REFLECTION_AND_REFRACTION;
+    glassBall.material.materialType = Material::REFLECTION_AND_REFRACTION;
     glassBall.material.diffuseColor = Vec3f(0.8f, 0.7f, 0.6f);
     shapes.add(glassBall);
 }
@@ -106,14 +106,14 @@ void RayTracer::addPlane() {
                                        128, 128, 255, 255,  //
                                        128, 128, 255, 255};
     static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2,
-                          Object::DIFFUSE_AND_GLOSSY);
+                          Material::DIFFUSE_AND_GLOSSY);
     shapes.add(plane.shape);
 }
 
 void RayTracer::addMesh() {
-    Model barrelModel = ObjFileReader().readFile(
+    model::Model barrelModel = ObjFileReader().readFile(
         "../assets/models/plasticBarrel/", "plastic_barrel.obj", false)[0];
-    static CudaMesh barrel(barrelModel, Object::DIFFUSE_AND_GLOSSY);
+    static CudaMesh barrel(barrelModel, Material::DIFFUSE_AND_GLOSSY);
     shapes.add(barrel.shape);
 }
 

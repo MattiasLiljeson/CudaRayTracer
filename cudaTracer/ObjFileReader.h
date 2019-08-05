@@ -7,10 +7,12 @@
 
 #include "Model.h"
 
+
+
 class ObjFileReader {
    private:
-    Model currModel;
-    std::vector<Model> models;
+    model::Model currModel;
+    std::vector<model::Model> models;
     std::string fileName;
     std::string folder;
     bool startAtZero;
@@ -22,8 +24,8 @@ class ObjFileReader {
     std::vector<std::array<float, 2>> readTexCoord;
 
     // std::vector<std::string> mtlNames;
-    Material currMaterial;
-    std::vector<Material> materials;
+    model::Material currMaterial;
+    std::vector<model::Material> materials;
 
     // std::vector<Vertex> vertices;
 
@@ -44,7 +46,7 @@ class ObjFileReader {
     ObjFileReader();
     ~ObjFileReader();
 
-    std::vector<Model> readFile(std::string pFolder, std::string pFileName,
+    std::vector<model::Model> readFile(std::string pFolder, std::string pFileName,
                                 bool p_startAtZero);
 };
 

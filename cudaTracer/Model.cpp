@@ -1,5 +1,9 @@
 #include "Model.h"
 
+using model::Model;
+using model::Material;
+using model::ObbFromFile;
+
 Model::Model() { clear(); }
 
 void Model::clear() {

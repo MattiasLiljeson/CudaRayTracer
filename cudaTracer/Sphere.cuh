@@ -1,7 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "Object.cuh"
+#include "Material.cuh"
 #include "Ray.cuh"
 #include "Vec.cuh"
 #include "SurfaceData.cuh"

@@ -5,6 +5,10 @@
 #include "ObjFileReader.h"
 #include "Popup.h"
 
+using model::Model;
+using model::Material;
+using model::ObbFromFile;
+
 ObjFileReader::ObjFileReader() {
     // numVertices = 0;
     numIndices = 0;
