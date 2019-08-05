@@ -12,7 +12,7 @@ struct Options {
     uint8_t maxDepth;
     uint8_t samples;
     Vec3f backgroundColor;
-    float bias;
+    float shadowBias;
     float scale;
     float imageAspectRatio;
 };
