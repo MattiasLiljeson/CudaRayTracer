@@ -166,14 +166,14 @@ Vec3f Tracer::diffuseAndGlossy(const Vec3f &dir, SurfaceData &data,
 
     Vec3f hitColor = g_options.backgroundColor;
     // [comment]
-    // We use the Phong illumation model int the default case. The
+    // We use the Phong illumation model in the default case. The
     // phong model is composed of a diffuse and a specular
     // reflection component.
     // [/comment]
     Vec3f lightAmt = Vec3f(0.0f, 0.0f, 0.0f);
     Vec3f specularColor = Vec3f(0.f, 0.0f, 0.0f);
     Vec3f shadowPointOrig = (dir.dot(data.n) < 0)
-                                ? data.n * g_options.bias
+                                ? data.hitPoint + data.n * g_options.bias
                                 : data.hitPoint - data.n * g_options.bias;
     // [comment]
     // Loop over all lights in the scene and sum their contribution
