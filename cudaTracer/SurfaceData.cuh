@@ -14,6 +14,9 @@ struct SurfaceData {
     Vec2f uv;
     Vec2f st;
     Vec3f n;
+    LinearNode* hitBb;
+    int hitBbCnt;
+    __device__ SurfaceData() : hitBb(nullptr), hitBbCnt(0) {}
 };
 
 #endif

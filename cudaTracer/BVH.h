@@ -14,15 +14,15 @@ using namespace vectorAxes;
 namespace BVH {
 
 struct PreNode {
-    int triIdx;
+    int primIdx;
     BoundingBox bb;
     Vec3f centroid;
     PreNode()
-        : triIdx(-1),
+        : primIdx(-1),
           centroid(Vec3f(-1.0f, -2.0f, -3.0f)),
           bb(Vec3f(-10.0f, -20.0f, -30.0f), Vec3f(-1.0f, -2.0f, -3.0f)) {}
     PreNode(int i, BoundingBox bb)
-        : triIdx(i), bb(bb), centroid(bb.centroid()) {}
+        : primIdx(i), bb(bb), centroid(bb.centroid()) {}
 };
 
 struct InterNode {
@@ -60,16 +60,18 @@ struct InterNode {
     }
 };
 
+template <typename T>
 class BvhFactory {
    public:
-    std::vector<Triangle> orderedPrims;
-    std::vector<Triangle> primitives;
+    std::vector<T> orderedPrims;
+    std::vector<T> primitives;
     std::vector<PreNode> primitiveInfo;
     std::vector<LinearNode> nodes;
     int threshold;
 
     BvhFactory(const std::vector<Vertex>& vertices,
-               const std::vector<Triangle>& primitives, int threshold) : threshold(threshold){
+               const std::vector<Triangle>& primitives, int threshold)
+        : threshold(threshold) {
         this->primitives = std::vector<Triangle>(primitives);
         primitiveInfo.resize(primitives.size());
         for (int i = 0; i < primitives.size(); ++i) {
@@ -78,8 +80,21 @@ class BvhFactory {
 
         int totalNodes = 0;
         InterNode* root = recursive(0, primitives.size(), totalNodes);
-        // fetch new vector and replace yourself instead
-        // primitives.swap(orderedPrims);
+
+        nodes = std::vector<LinearNode>(totalNodes);
+        int offset = 0;
+        flattenBvhTree(root, &offset);
+    }
+
+    BvhFactory(const std::vector<Shape>& primitives) : threshold(1) {
+        this->primitives = std::vector<Shape>(primitives);
+        primitiveInfo.resize(primitives.size());
+        for (int i = 0; i < primitives.size(); ++i) {
+            primitiveInfo[i] = {i, primitives[i].bb};
+        }
+
+        int totalNodes = 0;
+        InterNode* root = recursive(0, primitives.size(), totalNodes);
 
         nodes = std::vector<LinearNode>(totalNodes);
         int offset = 0;
@@ -138,7 +153,7 @@ class BvhFactory {
               const int end, InterNode* node) {
         int firstPrimOffset = orderedPrims.size();
         for (int i = start; i < end; ++i) {
-            int idx = primitiveInfo[i].triIdx;
+            int idx = primitiveInfo[i].primIdx;
             orderedPrims.push_back(primitives[idx]);
         }
         node->leaf(firstPrimOffset, primCnt, bb);

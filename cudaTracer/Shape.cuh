@@ -13,6 +13,7 @@ struct Shape {
         Mesh mesh;
     };
     Material material;
+    BoundingBox bb;
 
     __device__ Shape() { kind = NOT_SET; }
 
@@ -24,17 +25,19 @@ struct Shape {
             mesh = s.mesh;
         }
         material = s.material;
+        bb = s.bb;
     }
 
     __host__ Shape(Sphere sphere) {
         kind = SPHERE;
         this->sphere = sphere;
+        Vec3f min = sphere.center - sphere.radius;
+        Vec3f max = sphere.center + sphere.radius;
+        this->bb = BoundingBox(min, max);
     }
 
-    __host__ Shape(Mesh mesh) {
-        kind = MESH;
-        this->mesh = mesh;
-    }
+    __host__ Shape(Mesh mesh, BoundingBox bb)
+        : kind(MESH), mesh(mesh), bb(bb) {}
 
     __device__ Vec2f getStCoords(const Triangle &triangle,
                                  const Vec2f &uv) const {

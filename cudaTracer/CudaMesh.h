@@ -40,7 +40,8 @@ class CudaMesh {
         createShape(diffuse, normals, normals, material, transformation);
     }
 
-    CudaMesh(const model::Model &model, Material material, Mat44f transformation) {
+    CudaMesh(const model::Model &model, Material material,
+             Mat44f transformation) {
         prepareGeometry(model.getVertices(), model.getIndices());
 
         std::string diffuseFname = model.getMaterials()[0].texturePath;
@@ -64,7 +65,7 @@ class CudaMesh {
                          indices[i + 2]);
             tris.push_back(tri);
         }
-        BVH::BvhFactory bvh(vertices, tris, 10);
+        BVH::BvhFactory<Triangle> bvh(vertices, tris, 10);
         triangles = GlobalCudaVector<Triangle>::fromVector(bvh.orderedPrims);
         generateTangents();
         nodes = GlobalCudaVector<LinearNode>::fromVector(bvh.nodes);
@@ -72,10 +73,15 @@ class CudaMesh {
 
     void createShape(Texture diffuse, Texture normals, Texture specular,
                      Material material, Mat44f transformation) {
-        mesh = Mesh(triangles.getDevMem(), triangles.size(),
-                    vertices.getDevMem(), diffuse, normals, specular,
-                    nodes.getDevMem(), transformation);
-        shape = Shape(mesh);
+        mesh =
+            Mesh(triangles.getDevMem(), triangles.size(), vertices.getDevMem(),
+                 diffuse, normals, specular, nodes.getDevMem(), transformation);
+
+        BoundingBox shapeBb = nodes.getHostMemRef()[0].bb;
+        shapeBb.bbmin = transformation.multPoint(shapeBb.bbmin);        
+        shapeBb.bbmax = transformation.multPoint(shapeBb.bbmax);
+        
+        shape = Shape(mesh, shapeBb);
         shape.material = material;
     }
 

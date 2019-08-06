@@ -46,37 +46,45 @@ void RayTracer::initScene() {
     addSpheres();
     addPlane();
     addMesh();
+    static BVH::BvhFactory<Shape> bvh(shapes.getHostMemRef());
+    for (int i = 0; i < shapes.size(); ++i) {
+        shapes[i] = bvh.orderedPrims[i];
+    }
     shapes.copyToDevice();
+    nodes = GlobalCudaVector<LinearNode>::fromVector(bvh.nodes);
 }
+
+float clampedRand(float max) { return (rand() / (float)RAND_MAX) * max; }
 
 void RayTracer::addLights() {
     const int numLights = 10;
-    const float radStep = (2 * PI) / numLights;
+    const float radStep = (2.0f * PI) / numLights;
     const float intensityFactor = 0.5f;
+    const float maxDist = 50.0f;
 
-    for (int i = 0; i < 10; ++i) {
-        Vec3f position(sin(i * radStep) * 5, 5.0f, cos(i * radStep) * 5);
-        Vec3f intensity(rand() / (float)RAND_MAX * intensityFactor,  //
-                        rand() / (float)RAND_MAX * intensityFactor,  //
-                        rand() / (float)RAND_MAX * intensityFactor);
-        lights.add(Light(position, intensity, 5.0f));
+    for (int i = 0; i < numLights; ++i) {
+        float power = clampedRand(25.0f);
+        Vec3f position(sin(i * radStep) * clampedRand(maxDist), power,
+                       cos(i * radStep) * clampedRand(maxDist));
+        Vec3f intensity(clampedRand(intensityFactor),  //
+                        clampedRand(intensityFactor),  //
+                        clampedRand(intensityFactor));
+        lights.add(Light(position, intensity, power));
     }
     lights.copyToDevice();
 }
 
 void RayTracer::addSpheres() {
-    const int sphereCntSqrt = 5;
+    const int sphereCntSqrt = 10;
     const float dist = 3.0f;
     float scale = 1.0f / sphereCntSqrt;
     for (int i = 0; i < sphereCntSqrt; ++i) {
         for (int j = 0; j < sphereCntSqrt; ++j) {
-            // int idx = i * sphereCntSqrt + j;
-            // std::cerr << idx << std::endl;
             float x = -sphereCntSqrt * dist * 0.5f + i * dist;
-            float z = -sphereCntSqrt * dist * 0.5f + j * dist;
+            float z = 10 + 0.5f + j * dist;
             Shape s = Shape(Sphere(Vec3f(x, -4.0f, z), 1.0f));
             s.material.materialType = Material::DIFFUSE_AND_GLOSSY;
-            s.material.diffuseColor = Vec3f(x * scale, 0.1f, z * scale);
+            s.material.diffuseColor = Vec3f(i * scale, 0.1f, j * scale);
             s.material.Kd = 0.8;
             s.material.Ks = scale * i * scale * j * 0.8f + 0.1f;
             s.material.specularExponent = (i * i * i * j * j * j) + 1;
@@ -101,8 +109,8 @@ void RayTracer::addPlane() {
     std::vector<Vertex> vertices{
         Vertex(Vec3f(-1.0f, 0.0f, 1.0f), Vec2f(0.0f, 0.0f)),  //
         Vertex(Vec3f(1.0f, 0.0f, 1.0f), Vec2f(1.0f, 0.0f)),   //
-        Vertex(Vec3f(1.0f, 0.0f, -10.f), Vec2f(1.0f, 1.0f)),  //
-        Vertex(Vec3f(-1.0f, 0.0f, -10.f), Vec2f(0.0f, 1.0f))};
+        Vertex(Vec3f(1.0f, 0.0f, -1.f), Vec2f(1.0f, 1.0f)),   //
+        Vertex(Vec3f(-1.0f, 0.0f, -1.f), Vec2f(0.0f, 1.0f))};
     std::vector<int> indices{0, 1, 3, 1, 2, 3};
     std::vector<unsigned char> diffuseData{0,   0,   255, 255,  //
                                            100, 0,   255, 255,  //
@@ -116,7 +124,7 @@ void RayTracer::addPlane() {
     m.materialType = Material::DIFFUSE_AND_GLOSSY;
     m.ior = 4;
 
-    Mat44f scale = Mat44f::scale(25, 1, 25);
+    Mat44f scale = Mat44f::scale(100, 1, 100);
     Mat44f translate = Mat44f::translate(0, -5, 0);
     static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2, m,
                           scale * translate);
@@ -132,17 +140,17 @@ void RayTracer::addMesh() {
     model::Model barrelModel = ObjFileReader().readFile(
         "../assets/models/plasticBarrel/", "plastic_barrel.obj", false)[0];
     {
-        Mat44f translate = Mat44f::translate(0.5, -5, 10);
+        Mat44f translate = Mat44f::translate(0.5, -5, 3);
         static CudaMesh barrel(barrelModel, m, scale * translate);
         shapes.add(barrel.shape);
     }
     {
-        Mat44f translate = Mat44f::translate(-2, -5, 11);
+        Mat44f translate = Mat44f::translate(-2, -5, 5);
         static CudaMesh barrel(barrelModel, m, scale * translate);
         shapes.add(barrel.shape);
     }
     {
-        Mat44f translate = Mat44f::translate(-4, -5, 12);
+        Mat44f translate = Mat44f::translate(-4, -5, 7);
         static CudaMesh barrel(barrelModel, m, scale * translate);
         shapes.add(barrel.shape);
     }
@@ -163,6 +171,7 @@ void RayTracer::update(float p_dt) {
     scene.shapeCnt = shapes.size();
     scene.orig = camera.getPosition();
     scene.camera = camera.getCamera().inversed();
+    scene.nodes = nodes.getDevMem();
 
     cudamain(options, scene, m_textureSet->cudaLinearMemory,
              m_textureSet->pitch, blockDim, curandStates);
@@ -217,11 +226,10 @@ void RayTracer::handleInput(float p_dt) {
 }
 
 void RayTracer::updateLights(float p_dt) {
-    Mat44f rotY = Mat44f::rotationY(p_dt * 10);
-    // update lights
+    Mat44f rotY = Mat44f::rotationY(p_dt * 100);
     for (int i = 0; i < lights.size(); ++i) {
         Vec3f tmp = lights[i].position;
-        tmp = rotY.multVec(lights[i].position);
+        tmp = rotY.multPoint(lights[i].position);
         lights[i].position = tmp;
     }
     lights.copyToDevice();

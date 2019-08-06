@@ -6,6 +6,11 @@
 
 template <typename T>
 class GlobalCudaVector {
+    bool memChanged = true;
+    bool copied = false;
+    std::vector<T> hostMem;
+    T* cudaMem;
+
    public:
     static GlobalCudaVector* newFromVector(std::vector<T> vec) {
         // TODO: newing stuff like this is and newer removing them is ugly...
@@ -53,6 +58,9 @@ class GlobalCudaVector {
         return cudaMem;
     }
 
+    std::vector<T> getHostMemCopy() const { return vector<T>(hostMem); }
+    const std::vector<T>& getHostMemRef() const { return hostMem; }
+
     T& operator[](int idx) { return hostMem[idx]; }
     const T& operator[](int idx) const { return hostMem[idx]; }
 
@@ -92,9 +100,4 @@ class GlobalCudaVector {
     }
 
     int byteCnt() { return sizeof(T) * (int)hostMem.size(); }
-
-    bool memChanged = true;
-    bool copied = false;
-    std::vector<T> hostMem;
-    T* cudaMem;
 };

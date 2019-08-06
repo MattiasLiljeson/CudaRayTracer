@@ -22,6 +22,7 @@ class RayTracer : public Service {
     Options options;
     GlobalCudaVector<Light> lights;
     GlobalCudaVector<Shape> shapes;
+    GlobalCudaVector<LinearNode> nodes;
     D3DCudaTextureSet* m_textureSet;
     unsigned char* curandStates;
     int blockDim;

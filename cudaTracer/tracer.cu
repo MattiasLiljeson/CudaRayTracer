@@ -20,6 +20,14 @@ Vec3f Tracer::castRay(Ray &ray, int depth) {
     float tnear = INF;
     SurfaceData sd;
     if (trace(ray, sd)) {
+        Vec3f base(0.0f, 0.0f, 0.0f);
+        //if (sd.hitBbCnt > 0) {
+        //    base = Vec3f(0.0f, sd.hitBbCnt / 20.0f, ray.tMax/1000);
+        //}
+        //if (ray.tMax == FLT_MAX) {
+        //    return base;
+        //}
+
         sd.hitPoint = ray();
         sd.st = sd.hit->getStCoords(sd.triangle, sd.uv);
         sd.n = sd.hit->getNormal(sd.hitPoint, sd.triangle, sd.uv, sd.st);
@@ -27,11 +35,11 @@ Vec3f Tracer::castRay(Ray &ray, int depth) {
         Material::Type materialType = sd.hit->getObject()->materialType;
         switch (materialType) {
             case Material::REFLECTION_AND_REFRACTION:
-                return reflectionAndRefraction(ray.dir, sd, depth);
+                return base + reflectionAndRefraction(ray.dir, sd, depth);
             case Material::REFLECTION:
-                return reflection(ray.dir, sd, depth);
+                return base + reflection(ray.dir, sd, depth);
             case Material::DIFFUSE_AND_GLOSSY:
-                return diffuseAndGlossy(ray.dir, sd, depth);
+                return base + diffuseAndGlossy(ray.dir, sd, depth);
             default:
                 return Vec3f(1.0f, 0.5f, 0.25f);
         }
@@ -40,14 +48,7 @@ Vec3f Tracer::castRay(Ray &ray, int depth) {
 }
 
 bool Tracer::trace(Ray &ray, SurfaceData &data) {
-    data.hit = nullptr;
-    for (int k = 0; k < g_scene.shapeCnt; ++k) {
-        bool intersected = g_scene.shapes[k].intersect(ray, data);
-        if (intersected) {
-            data.hit = &g_scene.shapes[k];
-        }
-    }
-    return data.hit != nullptr;
+    return g_scene.intersect(ray, data);
 }
 
 __device__ float clamp(const float &lo, const float &hi, const float &v) {
