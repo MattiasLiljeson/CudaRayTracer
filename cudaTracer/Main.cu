@@ -53,12 +53,6 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
     // correspond to valid pixels
     if (x >= g_options.width || y >= g_options.height) return;
 
-    // get a pointer to the pixel at (x,y)
-    float *pixel = (float *)(surface + y * C_PITCH) + 4 * x;
-    pixel[RED] = 0.0f;
-    pixel[GREEN] = 0.0f;
-    pixel[BLUE] = 0.0f;
-    pixel[ALPHA] = 1.0f;
 
     float widthScale = 1 / (float)g_options.width;
     float heightScale = 1 / (float)g_options.height;
@@ -69,6 +63,7 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
                  g_options.imageAspectRatio * g_options.scale;
     float ndcY = (1.0f - 2.0f * (y + 0.5f) * heightScale) * g_options.scale;
 
+    Vec3f pixCol(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < g_options.samples; ++i) {
         float xJitter = g_options.samples > 1 ? randk(localState) - 0.5 : 0.0f;
         float yJitter = g_options.samples > 1 ? randk(localState) - 0.5 : 0.0f;
@@ -81,14 +76,23 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
         Tracer trace(surface);
         Vec3f result = trace.castRay(Ray(g_scene.orig, dir), 0);
 
-        pixel[RED] += result[Vec3f::X];
-        pixel[GREEN] += result[Vec3f::Y];
-        pixel[BLUE] += result[Vec3f::Z];
+        pixCol[RED] += result[RED];
+        pixCol[GREEN] += result[GREEN];
+        pixCol[BLUE] += result[BLUE];
     }
 
     for (int i = 0; i < ALPHA; ++i) {
-        pixel[i] /= g_options.samples;
+        pixCol[i] /= g_options.samples;
     }
+
+            const float screenGamma = 2.2;
+    const float sgInv = 1.0f / screenGamma;
+    // get a pointer to the pixel at (x,y)
+    float *pixel = (float *)(surface + y * C_PITCH) + 4 * x;
+    pixel[ALPHA] = 1.0f;
+    pixel[RED] = powf(pixCol[RED], sgInv);
+    pixel[GREEN] = powf(pixCol[GREEN], sgInv);
+    pixel[BLUE] = powf(pixCol[BLUE], sgInv);
 
     // stop_time = clock();
 
@@ -96,18 +100,6 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
     // pixel[RED] = time*0.000001f;
     // pixel[GREEN] = time * 0.0000001f;
     // pixel[BLUE] = time *  0.00000001f;
-
-        //// apply gamma correction (assume ambientColor, diffuseColor and
-    //// specColor have been linearized, i.e. have no gamma correction in
-    //// them)
-    // const float screenGamma = 2.2;
-    // Vec3f colorGammaCorrected;
-    // colorGammaCorrected[X] = powf(colorLinear[X], 1.0f / screenGamma);
-    // colorGammaCorrected[Y] = powf(colorLinear[Y], 1.0f / screenGamma);
-    // colorGammaCorrected[Z] = powf(colorLinear[Z], 1.0f / screenGamma);
-    //// use the gamma corrected color in the fragment
-    // return colorGammaCorrected;
-
 }
 
 __device__ float randk(curandState *const localState) {
