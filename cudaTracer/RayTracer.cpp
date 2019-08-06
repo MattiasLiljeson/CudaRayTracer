@@ -106,34 +106,32 @@ void RayTracer::addSpheres() {
 }
 
 void RayTracer::addPlane() {
+    float scaleFactor = 25.0f;
     std::vector<Vertex> vertices{
-        Vertex(Vec3f(-1.0f, 0.0f, 1.0f), Vec2f(0.0f, 0.0f)),  //
-        Vertex(Vec3f(1.0f, 0.0f, 1.0f), Vec2f(1.0f, 0.0f)),   //
-        Vertex(Vec3f(1.0f, 0.0f, -1.f), Vec2f(1.0f, 1.0f)),   //
-        Vertex(Vec3f(-1.0f, 0.0f, -1.f), Vec2f(0.0f, 1.0f))};
+        Vertex(Vec3f(-1.0f, 0.0f, 1.0f), Vec2f(0.0f, 0.0f)),               //
+        Vertex(Vec3f(1.0f, 0.0f, 1.0f), Vec2f(scaleFactor, 0.0f)),         //
+        Vertex(Vec3f(1.0f, 0.0f, -1.f), Vec2f(scaleFactor, scaleFactor)),  //
+        Vertex(Vec3f(-1.0f, 0.0f, -1.f), Vec2f(0.0f, scaleFactor))};
     std::vector<int> indices{0, 1, 3, 1, 2, 3};
-    std::vector<unsigned char> diffuseData{0,   0,   255, 255,  //
-                                           100, 0,   255, 255,  //
-                                           100, 100, 255, 255,  //
-                                           0,   100, 255, 255};
-    std::vector<unsigned char> bumpdata{128, 128, 255, 255,  //
-                                        128, 128, 255, 255,  //
-                                        128, 128, 255, 255,  //
-                                        128, 128, 255, 255};
-    Material m;
-    m.materialType = Material::DIFFUSE_AND_GLOSSY;
-    m.ior = 4;
+
+    std::string diffuseFname = "../assets/textures/pattern_106/diffus.png";
+    std::string normalFname = "../assets/textures/pattern_106/normal.png";
+    std::string specularFname = "../assets/textures/pattern_106/specular.png";
+
+    Material mtl;
+    mtl.materialType = Material::DIFFUSE_AND_GLOSSY;
+    mtl.ior = 4;
 
     Mat44f scale = Mat44f::scale(100, 1, 100);
     Mat44f translate = Mat44f::translate(0, -5, 0);
-    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2, m,
-                          scale * translate);
+    static CudaMesh plane(vertices, indices, 2, diffuseFname, normalFname,
+                          specularFname, Texture::WRAP, mtl, scale * translate);
     shapes.add(plane.shape);
 }
 
 void RayTracer::addMesh() {
-    Material m;
-    m.materialType = Material::DIFFUSE_AND_GLOSSY;
+    Material mtl;
+    mtl.materialType = Material::DIFFUSE_AND_GLOSSY;
 
     Mat44f scale = Mat44f::scale(1 / 50.0f, 1 / 50.0f, 1 / 50.0f);
 
@@ -141,17 +139,17 @@ void RayTracer::addMesh() {
         "../assets/models/plasticBarrel/", "plastic_barrel.obj", false)[0];
     {
         Mat44f translate = Mat44f::translate(0.5, -5, 3);
-        static CudaMesh barrel(barrelModel, m, scale * translate);
+        static CudaMesh barrel(barrelModel, mtl, scale * translate);
         shapes.add(barrel.shape);
     }
     {
         Mat44f translate = Mat44f::translate(-2, -5, 5);
-        static CudaMesh barrel(barrelModel, m, scale * translate);
+        static CudaMesh barrel(barrelModel, mtl, scale * translate);
         shapes.add(barrel.shape);
     }
     {
         Mat44f translate = Mat44f::translate(-4, -5, 7);
-        static CudaMesh barrel(barrelModel, m, scale * translate);
+        static CudaMesh barrel(barrelModel, mtl, scale * translate);
         shapes.add(barrel.shape);
     }
 }

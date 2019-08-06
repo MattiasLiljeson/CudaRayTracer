@@ -7,6 +7,8 @@ struct Texture {
     int width;
     int height;
     unsigned char *data;
+    enum AddressingMode { WRAP, CLAMP };
+    AddressingMode mode;
 
     __host__ __device__ Texture() {
         width = -1;
@@ -15,11 +17,8 @@ struct Texture {
     }
 
     __host__ __device__ Texture(unsigned width, unsigned height,
-                                unsigned char *data) {
-        this->data = data;
-        this->width = width;
-        this->height = height;
-    }
+                                unsigned char *data, AddressingMode mode)
+        : data(data), width(width), height(height), mode(mode) {}
 
     __device__ Vec3f sample(const Vec2f &uv) const {
         return getBilinearFilteredPixelColor(uv[0], uv[1]);
@@ -50,10 +49,19 @@ struct Texture {
 
     __device__ Vec3f getCol(int x, int y) const {
         // clamp-mode. Could be set to e.g. wrap or mirror
-        x = x < 0 ? 0 : x;
-        x = x > width - 1 ? width - 1 : x;
-        y = y < 0 ? 0 : y;
-        y = y > height - 1 ? height - 1 : y;
+        switch (mode) {
+            case CLAMP:
+                x = x < 0 ? 0 : x;
+                x = x > width - 1 ? width - 1 : x;
+                y = y < 0 ? 0 : y;
+                y = y > height - 1 ? height - 1 : y;
+                break;
+            case WRAP:
+                x = x % width;
+                y = y % height;
+            default:
+                break;
+        }
         float r = data[y * width * 4 + x * 4] / 255.0f;
         float g = data[y * width * 4 + x * 4 + 1] / 255.0f;
         float b = data[y * width * 4 + x * 4 + 2] / 255.0f;

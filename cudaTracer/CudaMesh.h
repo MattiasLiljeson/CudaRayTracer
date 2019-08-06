@@ -25,19 +25,13 @@ class CudaMesh {
     Shape shape;
 
     CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
-             int p_triCnt, std::vector<unsigned char> diffuseAsChars,
-             std::vector<unsigned char> normalsAsChars, int texWidth,
-             int texHeight, Material material, Mat44f transformation) {
+             int p_triCnt, std::string diffuseFname, std::string normalsFname,
+             std::string specularFname, Texture::AddressingMode mode,
+             Material material, Mat44f transformation) {
         prepareGeometry(vertices, indices);
 
-        diffuseData =
-            GlobalCudaVector<unsigned char>::fromVector(diffuseAsChars);
-        normalsData =
-            GlobalCudaVector<unsigned char>::fromVector(normalsAsChars);
-        Texture diffuse = Texture(texWidth, texHeight, diffuseData.getDevMem());
-        Texture normals = Texture(texWidth, texHeight, normalsData.getDevMem());
-
-        createShape(diffuse, normals, normals, material, transformation);
+        createShape(diffuseFname, normalsFname, specularFname, mode, material,
+                    transformation);
     }
 
     CudaMesh(const model::Model &model, Material material,
@@ -45,13 +39,11 @@ class CudaMesh {
         prepareGeometry(model.getVertices(), model.getIndices());
 
         std::string diffuseFname = model.getMaterials()[0].texturePath;
-        Texture diffuse = loadPngFromDisk(diffuseFname, &diffuseData);
         std::string normalsFname = model.getMaterials()[0].normalMapPath;
-        Texture normals = loadPngFromDisk(normalsFname, &normalsData);
         std::string specularFname = model.getMaterials()[0].specularMapPath;
-        Texture specular = loadPngFromDisk(specularFname, &specularData);
 
-        createShape(diffuse, normals, specular, material, transformation);
+        createShape(diffuseFname, normalsFname, specularFname, Texture::CLAMP,
+                    material, transformation);
     }
 
     void prepareGeometry(std::vector<Vertex> vertices,
@@ -71,22 +63,28 @@ class CudaMesh {
         nodes = GlobalCudaVector<LinearNode>::fromVector(bvh.nodes);
     }
 
-    void createShape(Texture diffuse, Texture normals, Texture specular,
+    void createShape(std::string diffuseFname, std::string normalsFname,
+                     std::string specularFname, Texture::AddressingMode mode,
                      Material material, Mat44f transformation) {
+        Texture diffuse = loadPngFromDisk(diffuseFname, &diffuseData, mode);
+        Texture normals = loadPngFromDisk(normalsFname, &normalsData, mode);
+        Texture specular = loadPngFromDisk(specularFname, &specularData, mode);
+
         mesh =
             Mesh(triangles.getDevMem(), triangles.size(), vertices.getDevMem(),
                  diffuse, normals, specular, nodes.getDevMem(), transformation);
 
         BoundingBox shapeBb = nodes.getHostMemRef()[0].bb;
-        shapeBb.bbmin = transformation.multPoint(shapeBb.bbmin);        
+        shapeBb.bbmin = transformation.multPoint(shapeBb.bbmin);
         shapeBb.bbmax = transformation.multPoint(shapeBb.bbmax);
-        
+
         shape = Shape(mesh, shapeBb);
         shape.material = material;
     }
 
     static Texture CudaMesh::loadPngFromDisk(
-        std::string texFname, GlobalCudaVector<unsigned char> *data) {
+        std::string texFname, GlobalCudaVector<unsigned char> *data,
+        Texture::AddressingMode mode) {
         std::vector<unsigned char> image;  // the raw pixels
         unsigned width, height;
         unsigned error = lodepng::decode(image, width, height, texFname);
@@ -102,7 +100,7 @@ class CudaMesh {
             Popup::error(errMsg);
         }
         *data = GlobalCudaVector<unsigned char>::fromVector(image);
-        return Texture(width, height, data->getDevMem());
+        return Texture(width, height, data->getDevMem(), mode);
     }
 
     void CudaMesh::generateTangents() {

@@ -21,10 +21,10 @@ Vec3f Tracer::castRay(Ray &ray, int depth) {
     SurfaceData sd;
     if (trace(ray, sd)) {
         Vec3f base(0.0f, 0.0f, 0.0f);
-        //if (sd.hitBbCnt > 0) {
+        // if (sd.hitBbCnt > 0) {
         //    base = Vec3f(0.0f, sd.hitBbCnt / 20.0f, ray.tMax/1000);
         //}
-        //if (ray.tMax == FLT_MAX) {
+        // if (ray.tMax == FLT_MAX) {
         //    return base;
         //}
 
