@@ -5,8 +5,8 @@
 #include "ObjFileReader.h"
 #include "Popup.h"
 
-using model::Model;
 using model::Material;
+using model::Model;
 using model::ObbFromFile;
 
 ObjFileReader::ObjFileReader() {
@@ -46,9 +46,10 @@ std::vector<Model> ObjFileReader::readFile(std::string pFolder,
     std::fstream objFile(objFilePath);
 
     if (!objFile) {
-        std::string msg = std::string("Could not read obj file: ") + objFilePath;
+        std::string msg =
+            std::string("Could not read obj file: ") + objFilePath;
         Popup::error(__FILE__, __FUNCTION__, __LINE__, msg);
-    } else{
+    } else {
         std::deque<std::string> lines;
         std::string tmp;
         while (!objFile.eof()) {
@@ -165,9 +166,9 @@ void ObjFileReader::readNormals(std::vector<std::string> p_lineWords) {
 void ObjFileReader::readVertices(std::vector<std::string> p_lineWords) {
     std::array<float, 3> pos;
     //_stream >> pos[Vertex::X] >> pos[Vertex::Y] >> pos[Vertex::Z];
-    pos[Vertex::X] = (float)atof(p_lineWords[0].c_str()) / 50;  +1.0f;
-    pos[Vertex::Y] = (float)atof(p_lineWords[1].c_str())/50 + 1.0f;
-    pos[Vertex::Z] = (float)atof(p_lineWords[2].c_str()) / 50;  // + 2.0f;
+    pos[Vertex::X] = (float)atof(p_lineWords[0].c_str()) / 50-1.0f;
+    pos[Vertex::Y] = (float)atof(p_lineWords[1].c_str()) / 50+ 0.0f;
+    pos[Vertex::Z] = (float)atof(p_lineWords[2].c_str()) / 50+ 5.0f;
     readPos.push_back(pos);
 }
 

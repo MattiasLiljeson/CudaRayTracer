@@ -96,6 +96,18 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
     // pixel[RED] = time*0.000001f;
     // pixel[GREEN] = time * 0.0000001f;
     // pixel[BLUE] = time *  0.00000001f;
+
+        //// apply gamma correction (assume ambientColor, diffuseColor and
+    //// specColor have been linearized, i.e. have no gamma correction in
+    //// them)
+    // const float screenGamma = 2.2;
+    // Vec3f colorGammaCorrected;
+    // colorGammaCorrected[X] = powf(colorLinear[X], 1.0f / screenGamma);
+    // colorGammaCorrected[Y] = powf(colorLinear[Y], 1.0f / screenGamma);
+    // colorGammaCorrected[Z] = powf(colorLinear[Z], 1.0f / screenGamma);
+    //// use the gamma corrected color in the fragment
+    // return colorGammaCorrected;
+
 }
 
 __device__ float randk(curandState *const localState) {

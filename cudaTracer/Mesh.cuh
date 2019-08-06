@@ -19,6 +19,7 @@ class Mesh {
     Vertex *vertices;
     Texture diffuse;
     Texture normals;
+    Texture specular;
     LinearNode *nodes;
 
     __host__ __device__ Mesh() {
@@ -29,12 +30,13 @@ class Mesh {
 
     __host__ __device__ Mesh(Triangle *triangles, int triangleCnt,
                              Vertex *vertices, Texture diffuse, Texture normals,
-                             LinearNode *nodes) {
+                             Texture specular, LinearNode *nodes) {
         this->triangles = triangles;
         this->triangleCnt = triangleCnt;
         this->vertices = vertices;
         this->diffuse = diffuse;
         this->normals = normals;
+        this->specular = specular;
         this->nodes = nodes;
     }
 
@@ -76,6 +78,10 @@ class Mesh {
         Vec3f normSamp = normals.sample(st);
         normSamp = ((normSamp * 2.0f) - 1.0f);
         return (n + normSamp[X] * t + normSamp[Y] * b).normalized();
+    }
+
+    __device__ float getSpecularMask(const Vec2f &st) const {
+        return specular.sample(st)[X];
     }
 
     template <int Size>

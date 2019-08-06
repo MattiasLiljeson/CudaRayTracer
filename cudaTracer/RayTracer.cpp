@@ -18,7 +18,7 @@ void RayTracer::addDebugGuiStuff() {
     dg->setPosition("Rays", 220, 0);
     dg->setVisible("Rays", false);
 
-    dg->setSize("Options", 150, 100);
+    dg->setSize("Options", 150, 125);
     dg->setPosition("Options", 0, 75);
 
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE, "fov",
@@ -29,6 +29,8 @@ void RayTracer::addDebugGuiStuff() {
                &options.maxDepth);
     dg->addVar("Options", DebugGUI::DG_CHAR, DebugGUI::READ_WRITE, "samples",
                &options.samples);
+    dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE,
+               "shadowBias", &options.shadowBias);
 }
 
 void RayTracer::initScene() {
@@ -55,7 +57,7 @@ void RayTracer::addLights() {
         Vec3f intensity(rand() / (float)RAND_MAX * intensityFactor,  //
                         rand() / (float)RAND_MAX * intensityFactor,  //
                         rand() / (float)RAND_MAX * intensityFactor);
-        lights.add(Light(position, intensity));
+        lights.add(Light(position, intensity, 5.0f));
     }
     lights.copyToDevice();
 }
@@ -68,14 +70,14 @@ void RayTracer::addSpheres() {
         for (int j = 0; j < sphereCntSqrt; ++j) {
             // int idx = i * sphereCntSqrt + j;
             // std::cerr << idx << std::endl;
-            float x = -sphereCntSqrt*dist*0.5f + i * dist;
-            float z = -sphereCntSqrt*dist*0.5f + j * dist;
+            float x = -sphereCntSqrt * dist * 0.5f + i * dist;
+            float z = -sphereCntSqrt * dist * 0.5f + j * dist;
             Shape s = Shape(Sphere(Vec3f(x, -4.0f, z), 1.0f));
             s.material.materialType = Material::DIFFUSE_AND_GLOSSY;
             s.material.diffuseColor = Vec3f(x * scale, 0.1f, z * scale);
             s.material.Kd = 0.8;
-            s.material.Ks = scale * i * scale * j* 0.8f + 0.1f;
-            s.material.specularExponent = i * j * 100 + 1;
+            s.material.Ks = scale * i * scale * j * 0.8f + 0.1f;
+            s.material.specularExponent = (i * i * i * j * j * j) + 1;
             shapes.add(s);
         }
     }

@@ -5,13 +5,15 @@
 
 struct Light {
     __host__ constexpr Light()
-        : Light(Vec3f(0.0f,0.0f,0.0f),Vec3f(0.0f,0.0f,0.0f)){}
-    __host__ constexpr Light(const Vec3f &p, const Vec3f &i) : position(p), intensity(i), lightPower(16.0f){
-    }
+        : position(Vec3f(0.0f, 0.0f, 0.0f)),
+          intensity(Vec3f(0.0f, 0.0f, 0.0f)),
+          power(1.0f) {}
+    __host__ constexpr Light(const Vec3f &p, const Vec3f &i, float power)
+        : position(p), intensity(i), power(power) {}
 
     Vec3f position;
     Vec3f intensity;
-    float lightPower;
+    float power;
 };
 
 #endif  // !LIGHT_CUH

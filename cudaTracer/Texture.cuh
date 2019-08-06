@@ -31,13 +31,9 @@ struct Texture {
         return getCol(x, y);
     }
 
-    __device__ float clamp(const float &lo, const float &hi, const float &v) const {
-        return fmax(lo, fmin(hi, v));
-    }
-
     __device__ Vec3f getBilinearFilteredPixelColor(float u, float v) const {
-        u = /*clamp(0.0f, 1.0f,*/ u * width - 0.5;
-        v = /*clamp(0.0f, 1.0f,*/v * height - 0.5;
+        u = u * width - 0.5;
+        v = v * height - 0.5;
         int x = floor(u);
         int y = floor(v);
         double u_ratio = u - x;
@@ -53,11 +49,11 @@ struct Texture {
     }
 
     __device__ Vec3f getCol(int x, int y) const {
-        //clamp-mode. Could be set to e.g. wrap or mirror
+        // clamp-mode. Could be set to e.g. wrap or mirror
         x = x < 0 ? 0 : x;
-        x = x > width-1 ? width-1 : x;
+        x = x > width - 1 ? width - 1 : x;
         y = y < 0 ? 0 : y;
-        y = y > height-1 ? height-1 : y;
+        y = y > height - 1 ? height - 1 : y;
         float r = data[y * width * 4 + x * 4] / 255.0f;
         float g = data[y * width * 4 + x * 4 + 1] / 255.0f;
         float b = data[y * width * 4 + x * 4 + 2] / 255.0f;

@@ -47,12 +47,21 @@ struct Shape {
         // Famous words, should never happen :D
         return Vec2f(1.0f, 1.0f);
     }
+
     __device__ Vec3f getNormal(const Vec3f &P, const Triangle &triangle,
                                const Vec2f &uv, const Vec2f &st) const {
         if (kind == Shape::SPHERE) {
             return sphere.getNormal(P);
         } else if (kind == Shape::MESH) {
             return mesh.getNormal(triangle, uv, st);
+        }
+    }
+
+    __device__ float getSpecularMask(const Vec2f &st) const {
+        if (kind == Shape::SPHERE) {
+            return material.Ks;
+        } else if (kind == Shape::MESH) {
+            return mesh.getSpecularMask(st);
         }
     }
 
