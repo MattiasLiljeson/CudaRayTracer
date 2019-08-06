@@ -84,13 +84,13 @@ void RayTracer::addSpheres() {
         }
     }
 
-    Shape mirrorBall = Shape(Sphere(Vec3f(1.0f, 1.0f, 3.0f), 1.0f));
+    Shape mirrorBall = Shape(Sphere(Vec3f(2.5f, 1.0f, 3.0f), 1.0f));
     mirrorBall.material.ior = 64;
     mirrorBall.material.materialType = Material::REFLECTION;
     mirrorBall.material.diffuseColor = Vec3f(0.722f, 0.451f, 0.2f);
     shapes.add(mirrorBall);
 
-    Shape glassBall = Shape(Sphere(Vec3f(0.5f, -1.5f, 4.5f), 1.5f));
+    Shape glassBall = Shape(Sphere(Vec3f(1.0f, -3.0f, 6.5f), 1.5f));
     glassBall.material.ior = 1.5f;
     glassBall.material.materialType = Material::REFLECTION_AND_REFRACTION;
     glassBall.material.diffuseColor = Vec3f(0.8f, 0.7f, 0.6f);
@@ -98,12 +98,11 @@ void RayTracer::addSpheres() {
 }
 
 void RayTracer::addPlane() {
-    float planeSize = 100.0f;
     std::vector<Vertex> vertices{
-        Vertex(Vec3f(-planeSize, -10.0f, planeSize), Vec2f(0.0f, 0.0f)),  //
-        Vertex(Vec3f(planeSize, -10.0f, planeSize), Vec2f(1.0f, 0.0f)),   //
-        Vertex(Vec3f(planeSize, -10.0f, -planeSize), Vec2f(1.0f, 1.0f)),  //
-        Vertex(Vec3f(-planeSize, -10.0f, -planeSize), Vec2f(0.0f, 1.0f))};
+        Vertex(Vec3f(-1.0f, 0.0f, 1.0f), Vec2f(0.0f, 0.0f)),  //
+        Vertex(Vec3f(1.0f, 0.0f, 1.0f), Vec2f(1.0f, 0.0f)),   //
+        Vertex(Vec3f(1.0f, 0.0f, -10.f), Vec2f(1.0f, 1.0f)),  //
+        Vertex(Vec3f(-1.0f, 0.0f, -10.f), Vec2f(0.0f, 1.0f))};
     std::vector<int> indices{0, 1, 3, 1, 2, 3};
     std::vector<unsigned char> diffuseData{0,   0,   255, 255,  //
                                            100, 0,   255, 255,  //
@@ -116,17 +115,37 @@ void RayTracer::addPlane() {
     Material m;
     m.materialType = Material::DIFFUSE_AND_GLOSSY;
     m.ior = 4;
-    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2, m);
+
+    Mat44f scale = Mat44f::scale(25, 1, 25);
+    Mat44f translate = Mat44f::translate(0, -5, 0);
+    static CudaMesh plane(vertices, indices, 2, diffuseData, bumpdata, 2, 2, m,
+                          scale * translate);
     shapes.add(plane.shape);
 }
 
 void RayTracer::addMesh() {
     Material m;
     m.materialType = Material::DIFFUSE_AND_GLOSSY;
+
+    Mat44f scale = Mat44f::scale(1 / 50.0f, 1 / 50.0f, 1 / 50.0f);
+
     model::Model barrelModel = ObjFileReader().readFile(
         "../assets/models/plasticBarrel/", "plastic_barrel.obj", false)[0];
-    static CudaMesh barrel(barrelModel, m);
-    shapes.add(barrel.shape);
+    {
+        Mat44f translate = Mat44f::translate(0.5, -5, 10);
+        static CudaMesh barrel(barrelModel, m, scale * translate);
+        shapes.add(barrel.shape);
+    }
+    {
+        Mat44f translate = Mat44f::translate(-2, -5, 11);
+        static CudaMesh barrel(barrelModel, m, scale * translate);
+        shapes.add(barrel.shape);
+    }
+    {
+        Mat44f translate = Mat44f::translate(-4, -5, 12);
+        static CudaMesh barrel(barrelModel, m, scale * translate);
+        shapes.add(barrel.shape);
+    }
 }
 
 void RayTracer::update(float p_dt) {

@@ -21,6 +21,7 @@ class Mesh {
     Texture normals;
     Texture specular;
     LinearNode *nodes;
+    Mat44f transformInverse;
 
     __host__ __device__ Mesh() {
         triangleCnt = -1;
@@ -30,7 +31,8 @@ class Mesh {
 
     __host__ __device__ Mesh(Triangle *triangles, int triangleCnt,
                              Vertex *vertices, Texture diffuse, Texture normals,
-                             Texture specular, LinearNode *nodes) {
+                             Texture specular, LinearNode *nodes,
+                             Mat44f transform) {
         this->triangles = triangles;
         this->triangleCnt = triangleCnt;
         this->vertices = vertices;
@@ -38,6 +40,7 @@ class Mesh {
         this->normals = normals;
         this->specular = specular;
         this->nodes = nodes;
+        this->transformInverse = transform.inversed();
     }
 
     __device__ void getStAndNormal(SurfaceData &data) const {
@@ -99,8 +102,12 @@ class Mesh {
     }
 
     __device__ bool intersect(Ray &ray, SurfaceData &surface) const {
+        Ray tRay(transformInverse.multPoint(ray.origin),
+                 transformInverse.multVec(ray.dir), ray.tMax);
+
         bool hit = false;
-        Vec3f invDir(1.0f / ray.dir[X], 1.0f / ray.dir[Y], 1.0f / ray.dir[Z]);
+        Vec3f invDir(1.0f / tRay.dir[X], 1.0f / tRay.dir[Y],
+                     1.0f / tRay.dir[Z]);
         int dirIsNeg[3] = {invDir[X] < 0, invDir[Y] < 0, invDir[Z] < 0};
 
         int toVisitOffset = 0;
@@ -108,12 +115,12 @@ class Mesh {
         int nodesToVisit[64];
         while (true) {
             const LinearNode *node = &nodes[currentNodeIdx];
-            if (node->bb.intersect(ray, invDir, dirIsNeg)) {
+            if (node->bb.intersect(tRay, invDir, dirIsNeg)) {
                 if (node->primtiveCnt > 0) {
                     // leaf
                     for (int i = 0; i < node->primtiveCnt; ++i) {
                         Triangle tri = triangles[node->primitivesOffset + i];
-                        if (rayTriangleIntersect(tri, ray, surface)) {
+                        if (rayTriangleIntersect(tri, tRay, surface)) {
                             hit = true;
                         }
                     }
@@ -140,6 +147,7 @@ class Mesh {
                 currentNodeIdx = nodesToVisit[--toVisitOffset];
             }
         }
+        ray.tMax = tRay.tMax;
         return hit;
     }
 

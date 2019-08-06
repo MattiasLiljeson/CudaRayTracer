@@ -8,7 +8,8 @@ struct Ray {
     Vec3f dir;
     float tMax;
 
-    //__host__ __device__ Ray() : tMax(FLT_MAX) {}
+    __device__ Ray(const Ray& other)
+        : origin(other.origin), dir(other.dir), tMax(other.tMax) {}
     __host__ __device__ Ray(const Vec3f& o, const Vec3f& d,
                             float tMax = FLT_MAX)
         : origin(o), dir(d), tMax(tMax) {}

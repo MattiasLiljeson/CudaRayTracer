@@ -53,7 +53,6 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
     // correspond to valid pixels
     if (x >= g_options.width || y >= g_options.height) return;
 
-
     float widthScale = 1 / (float)g_options.width;
     float heightScale = 1 / (float)g_options.height;
 

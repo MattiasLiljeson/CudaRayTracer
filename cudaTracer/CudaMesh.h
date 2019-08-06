@@ -27,7 +27,7 @@ class CudaMesh {
     CudaMesh(std::vector<Vertex> vertices, std::vector<int> indices,
              int p_triCnt, std::vector<unsigned char> diffuseAsChars,
              std::vector<unsigned char> normalsAsChars, int texWidth,
-             int texHeight, Material material) {
+             int texHeight, Material material, Mat44f transformation) {
         prepareGeometry(vertices, indices);
 
         diffuseData =
@@ -37,10 +37,10 @@ class CudaMesh {
         Texture diffuse = Texture(texWidth, texHeight, diffuseData.getDevMem());
         Texture normals = Texture(texWidth, texHeight, normalsData.getDevMem());
 
-        createShape(diffuse, normals, normals, material);
+        createShape(diffuse, normals, normals, material, transformation);
     }
 
-    CudaMesh(const model::Model &model, Material material) {
+    CudaMesh(const model::Model &model, Material material, Mat44f transformation) {
         prepareGeometry(model.getVertices(), model.getIndices());
 
         std::string diffuseFname = model.getMaterials()[0].texturePath;
@@ -50,7 +50,7 @@ class CudaMesh {
         std::string specularFname = model.getMaterials()[0].specularMapPath;
         Texture specular = loadPngFromDisk(specularFname, &specularData);
 
-        createShape(diffuse, normals, specular, material);
+        createShape(diffuse, normals, specular, material, transformation);
     }
 
     void prepareGeometry(std::vector<Vertex> vertices,
@@ -71,9 +71,10 @@ class CudaMesh {
     }
 
     void createShape(Texture diffuse, Texture normals, Texture specular,
-                     Material material) {
+                     Material material, Mat44f transformation) {
         mesh = Mesh(triangles.getDevMem(), triangles.size(),
-                    vertices.getDevMem(), diffuse, normals, specular, nodes.getDevMem());
+                    vertices.getDevMem(), diffuse, normals, specular,
+                    nodes.getDevMem(), transformation);
         shape = Shape(mesh);
         shape.material = material;
     }
