@@ -15,6 +15,7 @@ struct Options {
     float shadowBias;
     float scale;
     float imageAspectRatio;
+    bool gammaCorrection;
 };
 
 inline __host__ __device__ float deg2rad(const float &deg) {

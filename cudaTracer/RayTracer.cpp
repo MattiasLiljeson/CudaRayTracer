@@ -18,7 +18,7 @@ void RayTracer::addDebugGuiStuff() {
     dg->setPosition("Rays", 220, 0);
     dg->setVisible("Rays", false);
 
-    dg->setSize("Options", 150, 125);
+    dg->setSize("Options", 150, 150);
     dg->setPosition("Options", 0, 75);
 
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE, "fov",
@@ -31,6 +31,8 @@ void RayTracer::addDebugGuiStuff() {
                &options.samples);
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE,
                "shadowBias", &options.shadowBias);
+    dg->addVar("Options", DebugGUI::DG_BOOL, DebugGUI::READ_WRITE,
+               "Gamma correction", &options.gammaCorrection);
 }
 
 void RayTracer::initScene() {

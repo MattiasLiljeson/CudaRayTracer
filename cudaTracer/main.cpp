@@ -58,6 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     options.shadowBias = 0.0001f;
     options.scale = tan(deg2rad(options.fov * 0.5f));
     options.imageAspectRatio = options.width / (float)options.height;
+    options.gammaCorrection = false;
 
     // HACK: add space for borders
     int wndWidth = options.width + 16;

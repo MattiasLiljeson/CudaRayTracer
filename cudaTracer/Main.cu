@@ -85,14 +85,21 @@ __global__ void kernel(unsigned char *surface, curandState *const rngStates) {
         pixCol[i] /= g_options.samples;
     }
 
-            const float screenGamma = 2.2;
-    const float sgInv = 1.0f / screenGamma;
-    // get a pointer to the pixel at (x,y)
     float *pixel = (float *)(surface + y * C_PITCH) + 4 * x;
-    pixel[ALPHA] = 1.0f;
-    pixel[RED] = powf(pixCol[RED], sgInv);
-    pixel[GREEN] = powf(pixCol[GREEN], sgInv);
-    pixel[BLUE] = powf(pixCol[BLUE], sgInv);
+    if (g_options.gammaCorrection) {
+        const float screenGamma = 2.2;
+        const float sgInv = 1.0f / screenGamma;
+        // get a pointer to the pixel at (x,y)
+        pixel[RED] = powf(pixCol[RED], sgInv);
+        pixel[GREEN] = powf(pixCol[GREEN], sgInv);
+        pixel[BLUE] = powf(pixCol[BLUE], sgInv);
+        pixel[ALPHA] = 1.0f;
+    } else {
+        pixel[RED] = pixCol[RED];
+        pixel[GREEN] = pixCol[GREEN];
+        pixel[BLUE] = pixCol[BLUE];
+        pixel[ALPHA] = 1.0f;
+    }
 
     // stop_time = clock();
 
