@@ -70,6 +70,15 @@ class Mesh {
 
     __device__ Vec3f getNormal(const Triangle &triangle, const Vec2f &uv,
                                const Vec2f &st) const {
+        if (false) {
+            const Vec3f &v0 = vertices[triangle[0]].position;
+            const Vec3f &v1 = vertices[triangle[1]].position;
+            const Vec3f &v2 = vertices[triangle[2]].position;
+            Vec3f e0 = (v1 - v0).normalized();
+            Vec3f e1 = (v2 - v1).normalized();
+            return (e0.cross(e1)).normalized();
+        }
+
         const Vertex &v0 = vertices[triangle[0]];
         const Vertex &v1 = vertices[triangle[1]];
         const Vertex &v2 = vertices[triangle[2]];
