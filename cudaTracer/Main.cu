@@ -9,7 +9,7 @@
 
 // Global variables
 __device__ __constant__ size_t C_PITCH;
-__device__ Options g_options;
+__device__ DeviceOpts g_options;
 __device__ Scene g_scene;
 
 // Function declarations
@@ -18,11 +18,12 @@ __device__ float randk(curandState *const localState);
 __global__ void cuke_initRNG(curandState *const rngStates,
                              const unsigned int seed /*, int blkXIdx*/);
 
-void cudamain(const Options &options, const Scene &scene, const void *surface,
-              size_t pitch, int blockDim, unsigned char *rngStates) {
+void cudamain(const DeviceOpts &options, const Scene &scene,
+              const void *surface, size_t pitch, int blockDim,
+              unsigned char *rngStates) {
     gpuErrchk(cudaMemcpyToSymbol(C_PITCH, &pitch, sizeof(size_t)));
 
-    gpuErrchk(cudaMemcpyToSymbol(g_options, &options, sizeof(Options)));
+    gpuErrchk(cudaMemcpyToSymbol(g_options, &options, sizeof(DeviceOpts)));
     gpuErrchk(cudaMemcpyToSymbol(g_scene, &scene, sizeof(Scene)));
     gpuErrchk(cudaPeekAtLastError());
 

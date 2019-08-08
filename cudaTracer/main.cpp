@@ -30,12 +30,12 @@ void prepareServices(HINSTANCE hInstance, DeviceHandler* deviceHandler,
                        deviceHandler->getWindowWidth(),
                        deviceHandler->getWindowHeight());
     static InputHandler input(&hInstance, deviceHandler->getHWnd());
-    static TextureRenderer texRender(deviceHandler, options.width,
-                                     options.height);
-    static RayTracer tracer(texRender.getTextureSet(), options.width,
-                            options.height, options);
+    static TextureRenderer texRender(deviceHandler, options.device.width,
+                                     options.device.height);
+    static RayTracer tracer(texRender.getTextureSet(), options.device.width,
+                            options.device.height, options);
     static Statistics stats;
-    static PicDumper dumper(options.height, options.height);
+    static PicDumper dumper(options.device.height, options.device.height);
 
     ServiceRegistry::instance().add<InputHandler>(&input);
     ServiceRegistry::instance().add<RayTracer>(&tracer);
@@ -49,21 +49,22 @@ void prepareServices(HINSTANCE hInstance, DeviceHandler* deviceHandler,
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow) {
     Options options;
-    options.width = 640;
-    options.height = 480;
-    options.fov = 90;
-    options.maxDepth = 5;
-    options.samples = 1;
-    options.backgroundColor = Vec<float, 3>(0.2f, 0.7f, 0.8f);
-    options.shadowBias = 0.0001f;
-    options.scale = tan(deg2rad(options.fov * 0.5f));
-    options.imageAspectRatio = options.width / (float)options.height;
-    options.gammaCorrection = false;
+    options.host.fov = 90;
+    options.device.width = 640;
+    options.device.height = 480;
+    options.device.maxDepth = 5;
+    options.device.samples = 1;
+    options.device.backgroundColor = Vec<float, 3>(0.2f, 0.7f, 0.8f);
+    options.device.shadowBias = 0.0001f;
+    options.device.scale = tan(deg2rad(options.host.fov * 0.5f));
+    options.device.imageAspectRatio =
+        options.device.width / (float)options.device.height;
+    options.device.gammaCorrection = false;
 
     // HACK: add space for borders
-    int wndWidth = options.width + 16;
+    int wndWidth = options.device.width + 16;
     // HACK: add space for borders and header
-    int wndHeight = options.height + 39;
+    int wndHeight = options.device.height + 39;
 
     DeviceHandler deviceHandler(hInstance, wndWidth, wndHeight);
     D3DDebugger d3dDbg(deviceHandler.getDevice());
@@ -83,7 +84,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             deviceHandler.presentFrame();
         }
     }
-    d3dDbg.reportLiveDeviceObjects();
+    return 0;
 }
 
 #else

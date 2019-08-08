@@ -6,7 +6,6 @@ RayTracer::RayTracer(D3DCudaTextureSet* textureSet, int width, int height,
                      Options options) {
     m_textureSet = textureSet;
     this->options = options;
-    blockDim = 16;
     addDebugGuiStuff();
     initScene();
 }
@@ -22,24 +21,25 @@ void RayTracer::addDebugGuiStuff() {
     dg->setPosition("Options", 0, 75);
 
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE, "fov",
-               &options.fov);
+               &options.host.fov);
     dg->addVar("Options", DebugGUI::DG_INT, DebugGUI::READ_WRITE, "blockdim",
-               &blockDim);
+               &options.device.blockSize);
     dg->addVar("Options", DebugGUI::DG_CHAR, DebugGUI::READ_WRITE, "maxdepth",
-               &options.maxDepth);
+               &options.device.maxDepth);
     dg->addVar("Options", DebugGUI::DG_CHAR, DebugGUI::READ_WRITE, "samples",
-               &options.samples);
+               &options.device.samples);
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE,
-               "shadowBias", &options.shadowBias);
+               "shadowBias", &options.device.shadowBias);
     dg->addVar("Options", DebugGUI::DG_BOOL, DebugGUI::READ_WRITE,
-               "Gamma correction", &options.gammaCorrection);
+               "Gamma correction", &options.device.gammaCorrection);
 }
 
 void RayTracer::initScene() {
     {
         // Init curand
         curandStates = nullptr;
-        curandStates = cu_initCurand(options.width, options.height);
+        curandStates =
+            cu_initCurand(options.device.width, options.device.height);
     }
 
     addLights();
@@ -60,11 +60,11 @@ float clampedRand(float min, float max) {
 }
 
 void RayTracer::addLights() {
-    const float radStep = (2.0f * PI) / options.lightCnt;
+    const float radStep = (2.0f * PI) / options.host.lightCnt;
     const float intensityFactor = 0.5f;
     const float maxDist = 50.0f;
 
-    for (int i = 0; i < options.lightCnt; ++i) {
+    for (int i = 0; i < options.host.lightCnt; ++i) {
         float power = clampedRand(25.0f);
         Vec3f position(sin(i * radStep) * clampedRand(10, maxDist),
                        clampedRand(25.0f),
@@ -179,8 +179,8 @@ void RayTracer::update(float p_dt) {
     scene.camera = camera.getCamera().inversed();
     scene.nodes = nodes.getDevMem();
 
-    cudamain(options, scene, m_textureSet->cudaLinearMemory,
-             m_textureSet->pitch, options.blockSize, curandStates);
+    cudamain(options.device, scene, m_textureSet->cudaLinearMemory,
+             m_textureSet->pitch, options.device.blockSize, curandStates);
     getLastCudaError("cuda_texture_2d failed");
 }
 
@@ -192,10 +192,12 @@ void RayTracer::perFrameDebugGuiStuff() {
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             float x = 320.0f * i, y = 240.0f * j;
-            float ndc_x = (2.0f * (x + 0.5f) / (float)options.width - 1.0f) *
-                          options.imageAspectRatio * options.scale;
-            float ndc_y = (1.0f - 2.0f * (y + 0.5f) / (float)options.height) *
-                          options.scale;
+            float ndc_x =
+                (2.0f * (x + 0.5f) / (float)options.device.width - 1.0f) *
+                options.device.imageAspectRatio * options.device.scale;
+            float ndc_y =
+                (1.0f - 2.0f * (y + 0.5f) / (float)options.device.height) *
+                options.device.scale;
             if (!added) {
                 // TODO: debug
                 sprintf_s(buffer, "ray %d %d", i, j);

@@ -13,7 +13,7 @@ enum colors { RED, GREEN, BLUE, ALPHA, COLOR_CNT };
 #define INF 2e10f
 
 __device__ __constant__ extern size_t C_PITCH;
-__device__ extern Options g_options;
+__device__ extern DeviceOpts g_options;
 __device__ extern Scene g_scene;
 
 class Tracer {

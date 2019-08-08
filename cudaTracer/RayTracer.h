@@ -5,15 +5,12 @@
 #include "GlobalCudaVector.h"
 #include "InputHandler.h"
 #include "Light.cuh"
-
+#include "ObjFileReader.h"
 #include "Options.cuh"
 #include "Scene.cuh"
-#include "Sphere.cuh"
-
-#include "ObjFileReader.h"
-#include "lodepng.h"
-
 #include "Service.h"
+#include "Sphere.cuh"
+#include "lodepng.h"
 
 class RayTracer : public Service {
     Camera camera;
@@ -25,7 +22,6 @@ class RayTracer : public Service {
     GlobalCudaVector<LinearNode> nodes;
     D3DCudaTextureSet* m_textureSet;
     unsigned char* curandStates;
-    int blockDim;
 
    public:
     RayTracer(D3DCudaTextureSet* textureSet, int width, int height,

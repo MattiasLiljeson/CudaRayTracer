@@ -1,23 +1,36 @@
-#include <cstdint>
-#include "Vec.cuh"
 #ifndef OPTIONS_CUH
 #define OPTIONS_CUH
 
+#include <cstdint>
+#include <string>
+#include "Vec.cuh"
+
 #define PI 3.1415926536f
 
-struct Options {
-    uint32_t width;
-    uint32_t height;
+struct HostOpts {
+    std::string modelFolder;
+    std::string modelFname;
+    uint8_t lightCnt;
     float fov;
-    uint8_t maxDepth;
-    uint8_t samples;
+};
+
+struct DeviceOpts {
+    float imageAspectRatio;
+    float scale;
+    int width;
+    int height;
     Vec3f backgroundColor;
     float shadowBias;
-    float scale;
-    float imageAspectRatio;
+    int blockSize;
+    uint8_t maxDepth;
+    uint8_t samples;
     bool gammaCorrection;
 };
 
+struct Options {
+    HostOpts host;
+    DeviceOpts device;
+};
 inline __host__ __device__ float deg2rad(const float &deg) {
     return deg * PI / 180;
 }
