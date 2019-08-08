@@ -259,11 +259,6 @@ void DeviceHandler::initD3D() {
         }
     }
 
-    // begin interop
-    gpuErrchk(cudaD3D11SetDirect3DDevice(m_device));
-    gpuErrchk(cudaPeekAtLastError());
-    getLastCudaError("cudaD3D11SetDirect3DDevice failed");
-
     // Create a render target view
     ID3D11Texture2D* pBackBuffer;
     HR(m_swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D),
