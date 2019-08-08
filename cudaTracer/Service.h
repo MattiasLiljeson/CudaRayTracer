@@ -32,7 +32,6 @@ class ServiceRegistry {
     }
 
     void add(std::string name, Service* service) {
-        std::cerr << "Adding service: " << name << std::endl;  // TODO: DEBUG
         map.insert({name, service});
         list.push_back(service);
     }
@@ -44,7 +43,6 @@ class ServiceRegistry {
     }
 
     Service* get(std::string name) {
-        std::cerr << "Fetching service: " << name << std::endl;  // TODO: DEBUG
         auto it = map.find(name);
         if (it != map.end()) {
             // element found;
