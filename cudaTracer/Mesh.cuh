@@ -173,7 +173,7 @@ class Mesh {
 
         float invDet = 1 / det;
         float t = edge2.dot(qvec) * invDet;
-        if (ray.tMax < t) {
+        if (t < 0.0f || ray.tMax < t) {
             return false;
         }
 
