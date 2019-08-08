@@ -55,17 +55,20 @@ void RayTracer::initScene() {
 }
 
 float clampedRand(float max) { return (rand() / (float)RAND_MAX) * max; }
+float clampedRand(float min, float max) {
+    return (rand() / (float)RAND_MAX) * (max - min) + min;
+}
 
 void RayTracer::addLights() {
-    const int numLights = 10;
-    const float radStep = (2.0f * PI) / numLights;
+    const float radStep = (2.0f * PI) / options.lightCnt;
     const float intensityFactor = 0.5f;
     const float maxDist = 50.0f;
 
-    for (int i = 0; i < numLights; ++i) {
+    for (int i = 0; i < options.lightCnt; ++i) {
         float power = clampedRand(25.0f);
-        Vec3f position(sin(i * radStep) * clampedRand(maxDist), power,
-                       cos(i * radStep) * clampedRand(maxDist));
+        Vec3f position(sin(i * radStep) * clampedRand(10, maxDist),
+                       clampedRand(25.0f),
+                       cos(i * radStep) * clampedRand(10, maxDist));
         Vec3f intensity(clampedRand(intensityFactor),  //
                         clampedRand(intensityFactor),  //
                         clampedRand(intensityFactor));
@@ -82,7 +85,7 @@ void RayTracer::addSpheres() {
         for (int j = 0; j < sphereCntSqrt; ++j) {
             float x = -sphereCntSqrt * dist * 0.5f + i * dist;
             float z = 10 + 0.5f + j * dist;
-            Shape s = Shape(Sphere(Vec3f(x, -4.0f, z), 1.0f));
+            Shape s = Shape(Sphere(Vec3f(x, -2.0f, z), 1.0f));
             s.material.materialType = Material::DIFFUSE_AND_GLOSSY;
             s.material.diffuseColor = Vec3f(i * scale, 0.1f, j * scale);
             s.material.Kd = 0.8;
@@ -98,7 +101,7 @@ void RayTracer::addSpheres() {
     mirrorBall.material.diffuseColor = Vec3f(0.722f, 0.451f, 0.2f);
     shapes.add(mirrorBall);
 
-    Shape glassBall = Shape(Sphere(Vec3f(1.0f, -3.0f, 6.5f), 1.5f));
+    Shape glassBall = Shape(Sphere(Vec3f(1.5f, -1.5f, 6.5f), 1.5f));
     glassBall.material.ior = 1.5f;
     glassBall.material.materialType = Material::REFLECTION_AND_REFRACTION;
     glassBall.material.diffuseColor = Vec3f(0.8f, 0.7f, 0.6f);
@@ -123,7 +126,7 @@ void RayTracer::addPlane() {
     mtl.ior = 4;
 
     Mat44f scale = Mat44f::scale(100, 1, 100);
-    Mat44f translate = Mat44f::translate(0, -5, 0);
+    Mat44f translate = Mat44f::translate(0, -3, 0);
     static CudaMesh plane(vertices, indices, 2, diffuseFname, normalFname,
                           specularFname, Texture::WRAP, mtl, scale * translate);
     shapes.add(plane.shape);
@@ -135,21 +138,26 @@ void RayTracer::addMesh() {
 
     Mat44f scale = Mat44f::scale(1 / 50.0f, 1 / 50.0f, 1 / 50.0f);
 
-    model::Model barrelModel = ObjFileReader().readFile(
+    model::Model plasticBarrel = ObjFileReader().readFile(
         "../assets/models/plasticBarrel/", "plastic_barrel.obj", false)[0];
     {
-        Mat44f translate = Mat44f::translate(0.5, -5, 3);
-        static CudaMesh barrel(barrelModel, mtl, scale * translate);
+        Mat44f translate = Mat44f::translate(0.5, -3, 9);
+        static CudaMesh barrel(plasticBarrel, mtl, scale * translate);
         shapes.add(barrel.shape);
     }
     {
-        Mat44f translate = Mat44f::translate(-2, -5, 5);
-        static CudaMesh barrel(barrelModel, mtl, scale * translate);
+        Mat44f translate = Mat44f::translate(-2, -3, 5);
+        static CudaMesh barrel(plasticBarrel, mtl, scale * translate);
         shapes.add(barrel.shape);
     }
     {
-        Mat44f translate = Mat44f::translate(-4, -5, 7);
-        static CudaMesh barrel(barrelModel, mtl, scale * translate);
+        Material stainless;
+        stainless.materialType = Material::DIFFUSE_AND_GLOSSY;
+        stainless.specularExponent = 750;
+        model::Model stainlessBarrel = ObjFileReader().readFile(
+            "../assets/models/metalBarrel/", "metal_barrel.obj", false)[0];
+        Mat44f translate = Mat44f::translate(-4, -3, 4);
+        static CudaMesh barrel(stainlessBarrel, mtl, scale * translate);
         shapes.add(barrel.shape);
     }
 }
@@ -172,7 +180,7 @@ void RayTracer::update(float p_dt) {
     scene.nodes = nodes.getDevMem();
 
     cudamain(options, scene, m_textureSet->cudaLinearMemory,
-             m_textureSet->pitch, blockDim, curandStates);
+             m_textureSet->pitch, options.blockSize, curandStates);
     getLastCudaError("cuda_texture_2d failed");
 }
 
@@ -224,7 +232,7 @@ void RayTracer::handleInput(float p_dt) {
 }
 
 void RayTracer::updateLights(float p_dt) {
-    Mat44f rotY = Mat44f::rotationY(p_dt * 100);
+    Mat44f rotY = Mat44f::rotationY(p_dt * 25);
     for (int i = 0; i < lights.size(); ++i) {
         Vec3f tmp = lights[i].position;
         tmp = rotY.multPoint(lights[i].position);

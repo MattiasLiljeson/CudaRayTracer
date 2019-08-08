@@ -1,0 +1,13 @@
+# Created with Anim8or 0.97d beta
+# Object "plastic_barrel":
+
+newmtl ___default___
+Ka 0.878 0.878 0.878
+Kd 0.878 0.878 0.878
+Ks 1 1 1
+d 1.0
+Ns 752.6
+
+map_Kd diffus_stainless_steel.png
+map_Ks specular_stainless_steel.png
+map_bump normal_hard_bumps.png
