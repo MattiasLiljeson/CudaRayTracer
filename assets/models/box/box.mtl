@@ -6,7 +6,7 @@ Ka 0.878 0.878 0.878
 Kd 0.878 0.878 0.878
 Ks 1 1 1
 d 1.0
-map_Kd tex.png
 Ns 752.6
-
-
+map_Kd tex.png
+map_Ks tex.png
+map_bump tex.png
