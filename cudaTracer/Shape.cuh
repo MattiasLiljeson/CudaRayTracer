@@ -80,7 +80,7 @@ struct Shape {
 
     __device__ bool intersect(Ray &ray, SurfaceData &data) const {
         if (kind == Shape::SPHERE) {
-            return sphere.intersect(ray, data);
+            return sphere.intersect(ray);
         } else if (kind == Shape::MESH) {
             return mesh.intersect(ray, data);
         }

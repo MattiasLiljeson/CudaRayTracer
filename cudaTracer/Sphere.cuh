@@ -38,7 +38,7 @@ struct Sphere {
         radius = r;
         radius2 = r * r;
     }
-    __device__ bool intersect(Ray &ray, SurfaceData& data) const {
+    __device__ bool intersect(Ray &ray) const {
         Vec3f L = ray.origin - center;
         float a = ray.dir.dot(ray.dir);
         float b = 2 * ray.dir.dot(L);
