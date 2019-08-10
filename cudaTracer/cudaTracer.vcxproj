@@ -348,6 +348,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="DeviceHandler.h" />
     <ClInclude Include="GlobalCudaArray.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="guicon.h" />
     <ClInclude Include="LinearNode.cuh" />
     <ClInclude Include="main.cuh" />
     <ClInclude Include="Material.cuh" />
@@ -404,6 +405,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="Statistics.h" />
     <None Include="Texture.cuh" />
     <ClInclude Include="SurfaceData.cuh" />
+    <ClInclude Include="ExperimentReader.h" />
     <ClInclude Include="TextureRenderer.h" />
     <ClInclude Include="D3DCudaTextureSet.h" />
     <ClInclude Include="Timer.h" />
@@ -434,6 +436,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="RayTracer.cpp" />
     <ClCompile Include="ShaderSet.cpp" />
+    <ClCompile Include="guicon.cpp" />
+    <ClCompile Include="ExperimentReader.cpp" />
     <ClCompile Include="Tests.cpp" />
     <ClCompile Include="TextureRenderer.cpp" />
     <ClCompile Include="Timer.cpp" />

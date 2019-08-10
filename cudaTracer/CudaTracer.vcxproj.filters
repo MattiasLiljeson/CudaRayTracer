@@ -55,6 +55,12 @@
     <ClCompile Include="BvhTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="guicon.cpp">
+      <Filter>Source\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ExperimentReader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h">
@@ -158,6 +164,12 @@
     </ClInclude>
     <ClInclude Include="math.cuh">
       <Filter>Cuda kernels\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="guicon.h">
+      <Filter>Source\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ExperimentReader.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
