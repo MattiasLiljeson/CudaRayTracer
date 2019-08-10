@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include "Vec.cuh"
+#include "Mat.cuh"
 
 #define PI 3.1415926536f
 
