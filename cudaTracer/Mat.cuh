@@ -52,7 +52,7 @@ class Mat44 {
     }
 
     __device__ __host__ const T *operator[](int i) const { return x[i]; }
-    T *operator[](int i) { return x[i]; }
+    __device__ __host__ T *operator[](int i) { return x[i]; }
 
     // Multiply the current matrix with another matrix (rhs)
     __device__ __host__ Mat44 operator*(const Mat44 &v) const {
@@ -371,11 +371,18 @@ class Mat44 {
     }
 
     __device__ __host__ static Mat44 scale(const float x, const float y,
-                                               const float z) {
+                                           const float z) {
         return Mat44(x, 0.0f, 0.0f, 0.0f,  //
                      0.0f, y, 0.0f, 0.0f,  //
                      0.0f, 0.0f, z, 0.0f,  //
                      0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    __device__ __host__ static Mat44 scale(const float scale) {
+        return Mat44(1.0f, 0.0f, 0.0f, 0.0f,  //
+                     0.0f, 1.0f, 0.0f, 0.0f,  //
+                     0.0f, 0.0f, 1.0f, 0.0f,  //
+                     0.0f, 0.0f, 0.0f, 1.0f / scale);
     }
 };
 
