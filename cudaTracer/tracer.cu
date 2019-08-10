@@ -64,10 +64,10 @@ __device__ float clamp(const float &lo, const float &hi, const float &v) {
  *
  *  Due to the conservation of energy, transmittance is 1 - kr;
  */
-__device__ float fresnel(const Vec3f &I, const Vec3f &N, const float &ior) {
-    float cosi = clamp(-1, 1, I.dot(N));
+__device__ float fresnel(const Vec3f &i, const Vec3f &n, const float &ior) {
+    float cosi = clamp(-1, 1, i.dot(n));
     float etai = 1, etat = ior;
-    if (cosi > 0) {
+    if (cosi > 0.0f) {
         float tmp = etat;
         etat = etai;
         etai = tmp;
@@ -78,7 +78,7 @@ __device__ float fresnel(const Vec3f &I, const Vec3f &N, const float &ior) {
     if (sint >= 1) {
         return 1;
     } else {
-        float cost = sqrtf(fmax(0.f, 1 - sint * sint));
+        float cost = sqrtf(fmax(0.f, 1.0f - sint * sint));
         cosi = fabsf(cosi);
         float Rs =
             ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
