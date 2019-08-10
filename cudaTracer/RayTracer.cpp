@@ -17,7 +17,7 @@ void RayTracer::addDebugGuiStuff() {
     dg->setPosition("Rays", 220, 0);
     dg->setVisible("Rays", false);
 
-    dg->setSize("Options", 150, 150);
+    dg->setSize("Options", 150, 250);
     dg->setPosition("Options", 0, 75);
 
     dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_WRITE, "fov",
@@ -32,6 +32,15 @@ void RayTracer::addDebugGuiStuff() {
                "shadowBias", &options.device.shadowBias);
     dg->addVar("Options", DebugGUI::DG_BOOL, DebugGUI::READ_WRITE,
                "Gamma correction", &options.device.gammaCorrection);
+
+    dg->addVar("Options", DebugGUI::DG_INT, DebugGUI::READ_ONLY,
+               "Height", &options.device.height);
+    dg->addVar("Options", DebugGUI::DG_INT, DebugGUI::READ_ONLY,
+               "Width", &options.device.width);
+    dg->addVar("Options", DebugGUI::DG_FLOAT, DebugGUI::READ_ONLY, "Aspect ratio",
+               &options.device.imageAspectRatio);
+    dg->addVar("Options", DebugGUI::DG_INT, DebugGUI::READ_ONLY,
+               "Lights", &options.host.lightCnt);
 }
 
 void RayTracer::initScene() {
@@ -42,10 +51,20 @@ void RayTracer::initScene() {
             cu_initCurand(options.device.width, options.device.height);
     }
 
+    if (!options.host.model.fname.empty()) {
+        Material mtl;
+        mtl.materialType = Material::DIFFUSE_AND_GLOSSY;
+        Mat44f scale = Mat44f::scale(1 / 50.0f, 1 / 50.0f, 1 / 50.0f);
+        model::Model model = ObjFileReader().readFile(
+            options.host.model.folder, options.host.model.fname, false)[0];;
+        static CudaMesh barrel(model, mtl, options.host.model.transform);
+        shapes.add(barrel.shape);
+    } else {
+        addSpheres();
+        addPlane();
+        addMeshes();
+    }
     addLights();
-    addSpheres();
-    addPlane();
-    addMesh();
     static BVH::BvhFactory<Shape> bvh(shapes.getHostMemRef());
     for (int i = 0; i < shapes.size(); ++i) {
         shapes[i] = bvh.orderedPrims[i];
@@ -132,7 +151,7 @@ void RayTracer::addPlane() {
     shapes.add(plane.shape);
 }
 
-void RayTracer::addMesh() {
+void RayTracer::addMeshes() {
     Material mtl;
     mtl.materialType = Material::DIFFUSE_AND_GLOSSY;
 

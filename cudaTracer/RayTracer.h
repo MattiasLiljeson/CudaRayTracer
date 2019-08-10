@@ -33,7 +33,7 @@ class RayTracer : public Service {
     void addLights();
     void addSpheres();
     void addPlane();
-    void addMesh();
+    void addMeshes();
     void update(float p_dt);
     void perFrameDebugGuiStuff();
     void handleInput(float p_dt);

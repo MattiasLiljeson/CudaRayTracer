@@ -7,10 +7,15 @@
 
 #define PI 3.1415926536f
 
+struct ModelDesc {
+    std::string folder;
+    std::string fname;
+    Mat44f transform;
+};
+
 struct HostOpts {
-    std::string modelFolder;
-    std::string modelFname;
-    uint8_t lightCnt;
+    ModelDesc model;
+    int lightCnt;
     float fov;
 };
 
@@ -22,8 +27,8 @@ struct DeviceOpts {
     Vec3f backgroundColor;
     float shadowBias;
     int blockSize;
-    uint8_t maxDepth;
-    uint8_t samples;
+    int maxDepth;
+    int samples;
     bool gammaCorrection;
 };
 
