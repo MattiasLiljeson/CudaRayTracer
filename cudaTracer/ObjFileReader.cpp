@@ -116,38 +116,42 @@ void ObjFileReader::readMtlFile(std::vector<std::string> p_lineWords) {
     if (mtlFile.good()) {
         Material material;
         std::string mtlName;
-        while (mtlFile.eof() == false) {
+        while (!mtlFile.eof()) {
             std::string temp = "";
             std::stringstream lineStreamMtl;
             getline(mtlFile, line);
-            lineStreamMtl << line;
-            lineStreamMtl >> prefix;
+            if (!line.empty()) {
+                lineStreamMtl << line;
+                lineStreamMtl >> prefix;
+                std::transform(prefix.begin(), prefix.end(), prefix.begin(),
+                               ::tolower);
 
-            if (prefix == "newmtl") {
-                if (material.mtlName != "") {
-                    materials.push_back(material);
+                if (prefix == "newmtl") {
+                    if (material.mtlName != "") {
+                        materials.push_back(material);
 
-                    material.mtlName = "";
-                    material.texturePath = "";
-                    material.normalMapPath = "";
-                    material.specularMapPath = "";
+                        material.mtlName = "";
+                        material.texturePath = "";
+                        material.normalMapPath = "";
+                        material.specularMapPath = "";
+                    }
+                    lineStreamMtl >> material.mtlName;
                 }
-                lineStreamMtl >> material.mtlName;
-            }
-            // Diffuse and ambient are seen as the same component
-            if (prefix == "map_Kd" || prefix == "map_Ka") {
-                lineStreamMtl >> temp;
-                material.texturePath = folder + temp;
-            }
-            // Specular map and specular highlight map are seen as the same
-            else if (prefix == "map_Ks" || prefix == "map_Ns") {
-                lineStreamMtl >> temp;
-                material.specularMapPath = folder + temp;
-            }
-            // Bump maps are in this case seen as normal maps
-            else if (prefix == "map_bump" || prefix == "bump") {
-                lineStreamMtl >> temp;
-                material.normalMapPath = folder + temp;
+                // Diffuse and ambient are seen as the same component
+                if (prefix == "map_kd" || prefix == "map_ka") {
+                    lineStreamMtl >> temp;
+                    material.texturePath = folder + temp;
+                }
+                // Specular map and specular highlight map are seen as the same
+                else if (prefix == "map_ks" || prefix == "map_ns") {
+                    lineStreamMtl >> temp;
+                    material.specularMapPath = folder + temp;
+                }
+                // Bump maps are in this case seen as normal maps
+                else if (prefix == "map_bump" || prefix == "bump") {
+                    lineStreamMtl >> temp;
+                    material.normalMapPath = folder + temp;
+                }
             }
         }
         materials.push_back(material);
