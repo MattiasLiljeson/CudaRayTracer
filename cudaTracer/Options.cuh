@@ -31,6 +31,8 @@ struct DeviceOpts {
     int maxDepth;
     int samples;
     bool gammaCorrection;
+    bool useSceneBvh;
+    bool useMeshBvhs;
 };
 
 struct Options {

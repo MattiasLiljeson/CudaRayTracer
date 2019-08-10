@@ -48,10 +48,13 @@ Options loadDefaults() {
     options.device.width = 1024;
     options.device.height = 768;
     options.device.maxDepth = 5;
-    options.device.samples = 12;
+    options.device.samples = 1;
     options.device.backgroundColor = Vec3f(0.2f, 0.7f, 0.8f);
     options.device.shadowBias = 0.0001f;
     options.device.blockSize = 4;
+    options.device.useMeshBvhs = true;
+    options.device.useSceneBvh = true;
+
 
     options.device.scale = tan(deg2rad(options.host.fov * 0.5f));
     options.device.imageAspectRatio =

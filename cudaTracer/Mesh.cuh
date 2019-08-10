@@ -12,6 +12,8 @@
 
 using namespace vectorAxes;
 
+__device__ extern DeviceOpts g_options;
+
 class Mesh {
    public:
     int triangleCnt;
@@ -111,12 +113,21 @@ class Mesh {
     }
 
     __device__ bool intersect(Ray &ray, SurfaceData &surface) const {
-        Ray tRay(transformInverse.multPoint(ray.origin),
+        Ray transformedRay(transformInverse.multPoint(ray.origin),
                  transformInverse.multVec(ray.dir), ray.tMax);
-
         bool hit = false;
-        Vec3f invDir(1.0f / tRay.dir[X], 1.0f / tRay.dir[Y],
-                     1.0f / tRay.dir[Z]);
+        if (g_options.useMeshBvhs) {
+            hit = intersectWithBvh(transformedRay, surface);
+        } else {
+            hit = intersectWithoutBvh(transformedRay, surface);
+        }
+        ray.tMax = transformedRay.tMax;
+        return hit;
+    }
+    __device__ bool intersectWithBvh(Ray &ray, SurfaceData &surface) const {
+        bool hit = false;
+        Vec3f invDir(1.0f / ray.dir[X], 1.0f / ray.dir[Y],
+                     1.0f / ray.dir[Z]);
         int dirIsNeg[3] = {invDir[X] < 0, invDir[Y] < 0, invDir[Z] < 0};
 
         int toVisitOffset = 0;
@@ -124,12 +135,12 @@ class Mesh {
         int nodesToVisit[64];
         while (true) {
             const LinearNode *node = &nodes[currentNodeIdx];
-            if (node->bb.intersect(tRay, invDir, dirIsNeg)) {
+            if (node->bb.intersect(ray, invDir, dirIsNeg)) {
                 if (node->primtiveCnt > 0) {
                     // leaf
                     for (int i = 0; i < node->primtiveCnt; ++i) {
                         Triangle tri = triangles[node->primitivesOffset + i];
-                        if (rayTriangleIntersect(tri, tRay, surface)) {
+                        if (rayTriangleIntersect(tri, ray, surface)) {
                             hit = true;
                         }
                     }
@@ -156,8 +167,15 @@ class Mesh {
                 currentNodeIdx = nodesToVisit[--toVisitOffset];
             }
         }
-        ray.tMax = tRay.tMax;
         return hit;
+    }
+
+    __device__ bool intersectWithoutBvh(Ray &ray, SurfaceData &surface) const {
+        bool intersect = false;
+        for (int i = 0; i < triangleCnt; ++i) {
+            intersect |= rayTriangleIntersect(triangles[i], ray, surface);
+        }
+        return intersect;
     }
 
     // Moller-Trumbore ray-triangle intersection algorithm

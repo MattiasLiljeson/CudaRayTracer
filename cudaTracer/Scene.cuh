@@ -7,6 +7,8 @@
 
 class Light;
 
+__device__ extern DeviceOpts g_options;
+
 struct Scene {
     Light *lights;
     int lightCnt;
@@ -17,6 +19,14 @@ struct Scene {
     LinearNode *nodes;
 
     __device__ bool intersect(Ray &ray, SurfaceData &surface) const {
+        if (g_options.useSceneBvh) {
+            return intersectWithBvh(ray, surface);
+        } else {
+            return intersectWithoutBvh(ray, surface);
+        }
+    }
+
+    __device__ bool intersectWithBvh(Ray &ray, SurfaceData &surface) const {
         bool hit = false;
         Vec3f invDir(1.0f / ray.dir[X], 1.0f / ray.dir[Y], 1.0f / ray.dir[Z]);
         int dirIsNeg[3] = {invDir[X] < 0, invDir[Y] < 0, invDir[Z] < 0};
@@ -27,13 +37,13 @@ struct Scene {
         while (true) {
             /*const*/ LinearNode *node = &nodes[currentNodeIdx];
             if (node->bb.intersect(ray, invDir, dirIsNeg)) {
-                        //hit = true;
-                        surface.hitBb = node;
-                        surface.hitBbCnt++;
+                // hit = true;
+                surface.hitBb = node;
+                surface.hitBbCnt++;
                 if (node->primtiveCnt > 0) {
                     // leaf
                     for (int i = 0; i < node->primtiveCnt; ++i) {
-                        Shape* prim = &shapes[node->primitivesOffset + i];
+                        Shape *prim = &shapes[node->primitivesOffset + i];
                         if (prim->intersect(ray, surface)) {
                             surface.hit = prim;
                             hit = true;
@@ -63,6 +73,17 @@ struct Scene {
             }
         }
         return hit;
+    }
+
+    __device__ bool intersectWithoutBvh(Ray &ray, SurfaceData &surface) const {
+        bool intersect = false;
+        for (int i = 0; i < shapeCnt; ++i) {
+            if (shapes[i].intersect(ray, surface)) {
+                intersect = true;
+                surface.hit = &shapes[i];
+            }
+        }
+        return intersect;
     }
 };
 

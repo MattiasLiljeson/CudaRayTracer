@@ -32,6 +32,10 @@ void RayTracer::addDebugGuiStuff() {
                "shadowBias", &options.device.shadowBias);
     dg->addVar("Options", DebugGUI::DG_BOOL, DebugGUI::READ_WRITE,
                "Gamma correction", &options.device.gammaCorrection);
+    dg->addVar("Options", DebugGUI::DG_BOOL, DebugGUI::READ_WRITE,
+               "Use mesh BVHs", &options.device.useMeshBvhs);
+    dg->addVar("Options", DebugGUI::DG_BOOL, DebugGUI::READ_WRITE,
+               "Use Scene BVH", &options.device.useSceneBvh);
 
     dg->addVar("Options", DebugGUI::DG_INT, DebugGUI::READ_ONLY,
                "Height", &options.device.height);
