@@ -26,7 +26,6 @@ class PicDumper : public Service {
         }
     }
 
-   private:
     void toDisk(TextureRenderer* texRender) {
         std::time_t t = std::time(0);  // t is an integer type
         char buf[128];
@@ -40,6 +39,7 @@ class PicDumper : public Service {
         unsigned error = lodepng::encode(buf, img, picWidth, picHeight);
     }
 
+   private:
     vector<unsigned char> copyFloatsToCharVector(vector<float>& pixels) {
         vector<unsigned char> img(pixels.size());
         for (unsigned int i = 0; i < pixels.size(); i++) {
